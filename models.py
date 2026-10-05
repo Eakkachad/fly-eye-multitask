@@ -1,0 +1,114 @@
+"""Model zoo with one contract: lum (B, T, 1, 721) -> {"flow": (B,T,2,721), "depth": (B,T,1,721)}.
+
+M1-M3: flyvis ``Network`` (connectome-constrained dynamical model, flyvis default
+config) with real / rewired / random type graph + two flyvis ``DecoderGAVP``
+heads (flyvis default decoder config, shape [8, 2] for flow, [8, 1] for depth).
+M4/M5: baselines.hex_models.make_small / make_large (written by another worker),
+imported if present.
+"""
+
+from __future__ import annotations
+
+import copy
+import sys
+from pathlib import Path
+from typing import Dict, Optional
+
+import torch
+from torch import nn
+
+COURSE_DIR = Path(__file__).resolve().parent
+
+FLYVIS_MODELS = ("m1", "m2", "m3")
+GENERIC_MODELS = ("m4", "m5")
+
+DECODER_DEFAULTS = dict(
+    type="DecoderGAVP", kernel_size=5, const_weight=0.001, n_out_features=None,
+    p_dropout=0.5,
+)
+
+
+class FlyvisMultiTask(nn.Module):
+    """flyvis Network + per-task DecoderGAVP, behind the common contract."""
+
+    is_flyvis = True
+
+    def __init__(self, model: str = "m1", seed: int = 0, null_seed: Optional[int] = None,
+                 dt: float = 0.02, t_pre: float = 0.5):
+        super().__init__()
+        from datamate import Namespace
+        from flyvis import Network
+        from flyvis.task.decoder import DecoderGAVP
+
+        import nulls
+
+        null_seed = seed if null_seed is None else null_seed
+        conn = nulls.connectome_config(model, null_seed)
+        node_config = Namespace(
+            bias=Namespace(type="RestingPotential", groupby=["type"],
+                           initial_dist="Normal", mode="sample", requires_grad=True,
+                           mean=0.5, std=0.05, penalize=Namespace(activity=True),
+                           seed=seed),
+            time_const=Namespace(type="TimeConstant", groupby=["type"],
+                                 initial_dist="Value", value=0.05, requires_grad=True),
+        )
+        self.network = Network(connectome=Namespace(**conn), node_config=node_config)
+        cfg = {k: v for k, v in DECODER_DEFAULTS.items() if k != "type"}
+        self.decoder = nn.ModuleDict({
+            "flow": DecoderGAVP(self.network.connectome, shape=[8, 2], **cfg),
+            "depth": DecoderGAVP(self.network.connectome, shape=[8, 1], **cfg),
+        })
+        self.dt, self.t_pre = dt, t_pre
+        self.connectome_file = conn["file"]
+        self._ss = None
+        self._ss_batch = None
+
+    def refresh_steady_state(self, batch_size: int) -> None:
+        """Grey-screen steady state (flyvis recomputes it once per epoch)."""
+        with torch.no_grad():
+            self._ss = self.network.steady_state(
+                t_pre=self.t_pre, dt=self.dt, batch_size=batch_size, value=0.5)
+        self._ss_batch = batch_size
+
+    def forward(self, lum: torch.Tensor, return_activity: bool = False):
+        B, T = lum.shape[:2]
+        if self._ss is None or self._ss_batch != B or not self.training:
+            self.refresh_steady_state(B)
+        net = self.network
+        net.stimulus.zero(B, T)
+        net.stimulus.add_input(lum)
+        act = net(net.stimulus(), self.dt, state=self._ss)
+        out = {k: d(act) for k, d in self.decoder.items()}
+        if return_activity:
+            out["activity"] = act
+        return out
+
+    def param_groups(self, lr_net: float, lr_dec: float):
+        return [dict(params=list(self.network.parameters()), lr=lr_net, name="net"),
+                dict(params=list(self.decoder.parameters()), lr=lr_dec, name="dec")]
+
+
+def build_model(model: str, seed: int = 0, null_seed: Optional[int] = None) -> nn.Module:
+    model = model.lower()
+    if model in FLYVIS_MODELS:
+        return FlyvisMultiTask(model, seed=seed, null_seed=null_seed)
+    if model in GENERIC_MODELS:
+        path = COURSE_DIR / "baselines" / "hex_models.py"
+        if not path.exists():
+            raise FileNotFoundError(f"{path} not found (baselines not written yet)")
+        sys.path.insert(0, str(path.parent))
+        import hex_models  # type: ignore
+
+        torch.manual_seed(seed)
+        return {"m4": hex_models.make_small, "m5": hex_models.make_large}[model]()
+    raise ValueError(f"unknown model {model}")
+
+
+def n_trainable(module: nn.Module) -> Dict[str, int]:
+    out = {"total": sum(p.numel() for p in module.parameters() if p.requires_grad)}
+    if isinstance(module, FlyvisMultiTask):
+        out["network"] = sum(p.numel() for p in module.network.parameters()
+                             if p.requires_grad)
+        out["decoders"] = sum(p.numel() for p in module.decoder.parameters()
+                              if p.requires_grad)
+    return out
