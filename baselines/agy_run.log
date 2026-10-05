@@ -1,0 +1,46 @@
+The standard deep-learning baseline models, evaluation metrics, unit tests, benchmarks, and technical report for the fly-eye multi-task video project have been implemented in `/home/user/flyproj/course/baselines/`.
+
+---
+
+### Summary of Created Files
+
+1. [**`hex_models.py`**](file:///home/user/flyproj/course/baselines/hex_models.py):
+   - [`HexConv`](file:///home/user/flyproj/course/baselines/hex_models.py#L60-L127): 2D convolution on the regular 7-neighbourhood hex lattice (self + 6 axial offsets: `(0, 0), (+1, 0), (-1, 0), (0, +1), (0, -1), (+1, -1), (-1, +1)`). Boundary out-of-bounds neighbours index a zero-padding row at index $N=721$. Computation is vectorized via fused linear projection.
+   - [`HexConvGRUCell`](file:///home/user/flyproj/course/baselines/hex_models.py#L130-L197): Recurrent cell using [`HexConv`](file:///home/user/flyproj/course/baselines/hex_models.py#L60) for all gating operations and candidate hidden states.
+   - [`HexConvGRUNet`](file:///home/user/flyproj/course/baselines/hex_models.py#L200-L302): Multi-task architecture containing a `HexConv` encoder stack $\rightarrow$ temporal `HexConvGRU` $\rightarrow$ flow (`(B, T, 2, N)`) and depth (`(B, T, 1, N)`) heads.
+   - [`make_small()`](file:///home/user/flyproj/course/baselines/hex_models.py#L311-L313): Factory returning model with **4,315** trainable parameters (within the 3,000–6,000 target range).
+   - [`make_large()`](file:///home/user/flyproj/course/baselines/hex_models.py#L316-L318): Factory returning model with **604,835** trainable parameters (within the 400,000–1,000,000 target range).
+   - [`get_neighbour_table()`](file:///home/user/flyproj/course/baselines/hex_models.py#L29-L57): Cached $(N, 7)$ neighbour lookup table generated from `flyvis.utils.hex_utils.get_hex_coords(15)`.
+
+2. [**`metrics.py`**](file:///home/user/flyproj/course/baselines/metrics.py):
+   - [`epe`](file:///home/user/flyproj/course/baselines/metrics.py#L12-L39): Mean end-point error ($L_2$ norm over 2 flow channels).
+   - [`angular_error_deg`](file:///home/user/flyproj/course/baselines/metrics.py#L42-L89): Mean angular error in degrees between $(u, v, 1)$ vectors with high-precision angle calculation.
+   - [`depth_rmse`](file:///file:///home/user/flyproj/course/baselines/metrics.py#L92-L113): Root mean squared error for depth predictions.
+   - [`depth_absrel`](file:///home/user/flyproj/course/baselines/metrics.py#L116-L141): Absolute relative error $\frac{|pred - gt|}{|gt| + \epsilon}$ with configurable $\epsilon$.
+   - [`binned`](file:///home/user/flyproj/course/baselines/metrics.py#L144-L188): Conditioning metric analysis across arbitrary bin edges (speed, texture).
+
+3. [**`test_baselines.py`**](file:///home/user/flyproj/course/baselines/test_baselines.py):
+   - 16 pytest tests verifying output shapes on CPU & CUDA, parameter count targets, gradient flow through inputs and all module parameters, hand-computed metric toy examples, and 6-neighbourhood interior & border padding validity.
+
+4. [**`bench.py`**](file:///home/user/flyproj/course/baselines/bench.py):
+   - Measures training step time (forward + backward with Adam) and peak VRAM on CUDA for $B=4, T=19, N=721$.
+
+5. [**`REPORT_AGY.md`**](file:///home/user/flyproj/course/baselines/REPORT_AGY.md):
+   - Complete technical report detailing design choices, parameter counts, test runs, benchmark numbers, and architectural limitations.
+
+---
+
+### Verification and Benchmark Results
+
+- **Unit tests**:
+  ```bash
+  /home/user/flyproj/.venv/bin/python -m pytest -q test_baselines.py
+  # Output: 16 passed in 4.72s
+  ```
+
+- **CUDA Benchmark ($B=4, T=19, N=721$ on NVIDIA RTX 4060)**:
+  | Model | Trainable Params | Speed (`s/iter`) | Peak VRAM |
+  |---|---|---|---|
+  | `small` (`make_small()`) | **4,315** | **0.0401 s** | **160.0 MB** (0.156 GB) |
+  | `large` (`make_large()`) | **604,835** | **0.3397 s** | **1,667.8 MB** (1.629 GB) |
+exit=0
