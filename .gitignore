@@ -1,0 +1,7 @@
+data/
+*.zip
+runs/
+__pycache__/
+*.pt
+*.h5
+target/
