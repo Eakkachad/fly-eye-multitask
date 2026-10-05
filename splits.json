@@ -1,0 +1,135 @@
+{
+ "description": "MPI Sintel training scenes split by scene family; test scenes are never used for any choice. See splits.py for the procedure.",
+ "seed": 20261005,
+ "n_candidates_tied": 42,
+ "train": [
+  "alley_1",
+  "alley_2",
+  "ambush_2",
+  "ambush_4",
+  "ambush_5",
+  "ambush_6",
+  "ambush_7",
+  "bamboo_1",
+  "bamboo_2",
+  "shaman_2",
+  "shaman_3",
+  "sleeping_1",
+  "sleeping_2",
+  "temple_2",
+  "temple_3"
+ ],
+ "val": [
+  "market_2",
+  "market_5",
+  "market_6",
+  "mountain_1"
+ ],
+ "test": [
+  "bandage_1",
+  "bandage_2",
+  "cave_2",
+  "cave_4"
+ ],
+ "train_fraction_subsets": {
+  "0.25": [
+   "alley_2",
+   "ambush_6",
+   "bamboo_1",
+   "shaman_3"
+  ],
+  "1.0": [
+   "alley_1",
+   "alley_2",
+   "ambush_2",
+   "ambush_4",
+   "ambush_5",
+   "ambush_6",
+   "ambush_7",
+   "bamboo_1",
+   "bamboo_2",
+   "shaman_2",
+   "shaman_3",
+   "sleeping_1",
+   "sleeping_2",
+   "temple_2",
+   "temple_3"
+  ]
+ },
+ "frames": {
+  "alley_1": 50,
+  "alley_2": 50,
+  "ambush_2": 21,
+  "ambush_4": 33,
+  "ambush_5": 50,
+  "ambush_6": 20,
+  "ambush_7": 50,
+  "bamboo_1": 50,
+  "bamboo_2": 50,
+  "bandage_1": 50,
+  "bandage_2": 50,
+  "cave_2": 50,
+  "cave_4": 50,
+  "market_2": 50,
+  "market_5": 50,
+  "market_6": 40,
+  "mountain_1": 50,
+  "shaman_2": 50,
+  "shaman_3": 50,
+  "sleeping_1": 50,
+  "sleeping_2": 50,
+  "temple_2": 50,
+  "temple_3": 50
+ },
+ "frames_per_split": {
+  "train": 674,
+  "val": 190,
+  "test": 200,
+  "train_25": 170
+ },
+ "families": {
+  "alley": [
+   "alley_1",
+   "alley_2"
+  ],
+  "ambush": [
+   "ambush_2",
+   "ambush_4",
+   "ambush_5",
+   "ambush_6",
+   "ambush_7"
+  ],
+  "bamboo": [
+   "bamboo_1",
+   "bamboo_2"
+  ],
+  "bandage": [
+   "bandage_1",
+   "bandage_2"
+  ],
+  "cave": [
+   "cave_2",
+   "cave_4"
+  ],
+  "market": [
+   "market_2",
+   "market_5",
+   "market_6"
+  ],
+  "mountain": [
+   "mountain_1"
+  ],
+  "shaman": [
+   "shaman_2",
+   "shaman_3"
+  ],
+  "sleeping": [
+   "sleeping_1",
+   "sleeping_2"
+  ],
+  "temple": [
+   "temple_2",
+   "temple_3"
+  ]
+ }
+}
