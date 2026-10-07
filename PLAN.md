@@ -57,3 +57,14 @@ No model is tuned on test scenes; hyper-parameters chosen on val only; test eval
   (d) lower-resolution flow to the owner; the chosen change is logged as amendment A5 before any grid run.
   Depth val RMSE is reported alongside (not part of the decision).
 - A4 outcome (2026-10-08): **PASS** — best val EPE M1 4.915 (−3.1 %), M4 4.501 (−11.3 %) vs zero-flow 5.074. Flow stays on Sintel. Details: `.orchestra/tasks/C014-probe-REPORT.md` (single seed, noisy val; not a test of H1–H3).
+- A5 (2026-10-08, owner-approved, written before implementation/any run of these models): add a **hybrid** connectome-prior model.
+  Motivation (disclosed): the C014 probe (val only) showed M4 > M1; this amendment is therefore *post-probe* but pre-grid.
+  - **M6** = flyvis network with the real connectome (as M1, same activity penalty) → rectified activity of the connectome's output cell types
+    on all 721 hexals (B,T,C,721) → shared HexConvGRU trunk (`baselines/hex_models.HexConvGRUNet`, in_ch=C) → flow and depth heads.
+    Sized so total trainable params ≈ M1/M4 (15.4k ± 3 %).
+  - **M7** = M6 with the M2 degree-preserving rewired connectome (same null_seed rule as M2) — the control that separates "connectome wiring"
+    from "extra recurrent front-end".
+  - Same data, loss, optimizer, iterations, 3 seeds as the grid; test evaluated once.
+  - **H4:** M6 beats M4 on both val-selected test metrics (flow EPE, depth RMSE), mean over 3 seeds and ≥ 2/3 paired seeds.
+  - **H5:** M6 beats M7 on flow EPE in 3/3 paired seeds (connectome-specific benefit). If H4 holds but H5 fails, we report that the gain comes
+    from the architecture, not the wiring.
