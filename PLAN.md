@@ -42,3 +42,9 @@ No model is tuned on test scenes; hyper-parameters chosen on val only; test eval
 - Training: PyTorch (autodiff) via flyvis; several runs concurrently on the RTX 4060 (0.05 s/iter, 0.7 GB/run measured).
 - Rust: used where profiling shows a real bottleneck (data rendering/augmentation, evaluation over all test frames), via PyO3; the null connectome generator reuses the kagpt-fly `nulls` methodology. Not forced where PyTorch is the right tool.
 - Every run logs config, seed, package versions, peak VRAM, wall time (experiments/<run>/).
+
+## Amendments (logged before any full training run)
+- A1 (2026-10-05): M4 is parameter-matched to M1 **including decoders** (M1 total 15,387 = 734 network + 14,653 decoders) → `make_small_matched()` 15,402 params. The original brief targeted 3–6k (network-only count), which would have been unfair to M4.
+- A2 (2026-10-05): Smoke test showed no model beats zero-flow on val at 2k iterations. A learnability probe (M1, M4 @ 10k iters) on the A100 decides whether the flow task stays on Sintel or moves to flyvis synthetic motion stimuli (depth stays on Sintel). Any change will be recorded here **before** the full grid.
+- A3 (2026-10-05): The pretrained flyvis (M0) has seen bandage_2, cave_2, market_5 and market_6 in training. It is reported only on unseen scenes.
+- Note: the deadline in the header (2026-10-09) refers to the original 4-day plan. The actual course deadlines are tracked in docs/TEAM.md.
