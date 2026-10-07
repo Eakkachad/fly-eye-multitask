@@ -328,6 +328,39 @@ class HexConvGRUNet(nn.Module):
         return {"flow": flow, "depth": depth}
 
 
+class HexConvGRUNetK(HexConvGRUNet):
+    """M8: HexConvGRU-K. Same weights/params as M4; the GRU cell is applied K times per frame
+    (tied weights), re-injecting that frame's encoder features at every inner step. K=1 == M4."""
+
+    def __init__(self, *args, k_max: int = 4, z_bias_init: float = -1.0, **kw):
+        super().__init__(*args, **kw)
+        self.k_max = k_max
+        # update-gate bias toward "copy" (small z keeps previous h); value only, no new params
+        with torch.no_grad():
+            self.gru.conv_gates.bias[self.hid_ch:].fill_(z_bias_init)
+
+    def forward(self, lum=None, h_0=None, *, x=None, k: Optional[int] = None):
+        k = self.k_max if k is None else int(k)
+        if lum is None:
+            if x is None:
+                raise ValueError("Must provide input tensor 'lum' or 'x'.")
+            lum = x
+        if lum.dim() == 3:
+            lum = lum.unsqueeze(2)
+        B, T, C, N = lum.shape
+        feats = self.encoder(lum.reshape(B * T, C, N)).view(B, T, self.hid_ch, N)
+        h = h_0
+        h_seq = []
+        for t in range(T):
+            f = feats[:, t]
+            for _ in range(k):
+                h = self.gru(f, h)
+            h_seq.append(h)
+        h_flat = torch.stack(h_seq, dim=1).reshape(B * T, self.hid_ch, N)
+        return {"flow": self.flow_head(h_flat).view(B, T, 2, N),
+                "depth": self.depth_head(h_flat).view(B, T, 1, N)}
+
+
 def count_parameters(model: nn.Module) -> int:
     """Return total number of trainable parameters in model."""
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -341,6 +374,11 @@ def make_small() -> HexConvGRUNet:
 def make_small_matched() -> HexConvGRUNet:
     """Factory for param-matched HexConvGRUNet (~15,387 params, within +-5% of M1 connectome model)."""
     return HexConvGRUNet(hid_ch=15, n_layers=2, head_ch=18, in_ch=1, extent=15)
+
+
+def make_small_matched_k(k_max: int = 4) -> HexConvGRUNetK:
+    """M8 factory: M4 architecture (same param count), GRU iterated K<=k_max times per frame."""
+    return HexConvGRUNetK(hid_ch=15, n_layers=2, head_ch=18, in_ch=1, extent=15, k_max=k_max)
 
 
 def make_large() -> HexConvGRUNet:

@@ -253,3 +253,35 @@ def test_metric_binned():
     res_empty = binned(values, bin_values, edges_empty)
     assert torch.isnan(res_empty[0])
     assert math.isclose(res_empty[1].item(), 15.0, rel_tol=1e-4)
+
+
+# ----------------------------- M8 (HexConvGRU-K) -----------------------------
+def test_m8_k1_equals_m4_and_params():
+    from hex_models import make_small_matched_k
+    torch.manual_seed(0)
+    m4 = make_small_matched().eval()
+    m8 = make_small_matched_k().eval()
+    assert count_parameters(m8) == count_parameters(m4)
+    m8.load_state_dict(m4.state_dict())
+    x = torch.randn(2, 5, 1, m4.encoder[0].neighbour_table.shape[0])
+    with torch.no_grad():
+        a, b = m4(x), m8(x, k=1)
+    for key in ("flow", "depth"):
+        assert torch.equal(a[key], b[key])
+
+
+def test_m8_k_shapes_grad_anytime():
+    from hex_models import make_small_matched_k
+    m = make_small_matched_k()
+    n = m.encoder[0].neighbour_table.shape[0]
+    x = torch.randn(2, 4, 1, n)
+    outs = {}
+    for k in (1, 2, 3, 4):
+        o = m(x, k=k)
+        assert o["flow"].shape == (2, 4, 2, n) and o["depth"].shape == (2, 4, 1, n)
+        outs[k] = o["flow"].detach()
+    assert not torch.allclose(outs[1], outs[4])
+    m.zero_grad()
+    (m(x, k=4)["flow"].sum() + m(x, k=4)["depth"].sum()).backward()
+    assert all(p.grad is not None and torch.isfinite(p.grad).all() for p in m.parameters())
+    assert m(x).get("flow").shape == (2, 4, 2, n)  # default k = k_max

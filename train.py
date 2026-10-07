@@ -90,7 +90,11 @@ def penalty_apply(penalty, grads, lr):
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--model", required=True, choices=["m1", "m2", "m3", "m4", "m5"])
+    p.add_argument("--model", required=True, choices=["m1", "m2", "m3", "m4", "m5", "m8", "m6", "m7", "m6f", "m7f"])
+    p.add_argument("--frontend-ckpt", default=None,
+                   help="m6f/m7f: <run_dir>/best.pt of the trained M1/M2 of the same seed")
+    p.add_argument("--k-max", type=int, default=4,
+                   help="m8: K ~ U{1..k_max} GRU inner steps per training iteration")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--null-seed", type=int, default=None,
                    help="seed of the M2/M3 null graph (default: = --seed)")
@@ -250,7 +254,10 @@ def main(argv=None):
     assert set(ds["train"].sequence_scenes()) <= set(splits["train"])
     assert set(ds["val"].sequence_scenes()) <= set(splits["val"])
     depth_tf = D.DepthTransform.from_file()
-    model = models.build_model(args.model, seed=args.seed, null_seed=args.null_seed)
+    if args.model in models.FROZEN_HYBRID_MODELS and not args.frontend_ckpt:
+        raise SystemExit(f"--model {args.model} needs --frontend-ckpt")
+    model = models.build_model(args.model, seed=args.seed, null_seed=args.null_seed,
+                               frontend_ckpt=args.frontend_ckpt)
     dev = torch.device("cuda")
     model.to(dev)
     is_flyvis = getattr(model, "is_flyvis", False)
@@ -266,7 +273,8 @@ def main(argv=None):
         groups = [dict(params=list(model.parameters()), lr=args.lr, name="all")]
     opt = torch.optim.Adam(groups)
     penalty = None
-    if is_flyvis and not args.no_activity_penalty:
+    if (is_flyvis and not args.no_activity_penalty
+            and getattr(model, "use_penalty", True)):
         from datamate import Namespace
         from flyvis.solver import Penalty
 
@@ -339,8 +347,11 @@ def main(argv=None):
                 model.refresh_steady_state(args.batch_size)
             batch = prepare_batch(batch, depth_tf)
             opt.zero_grad(set_to_none=True)
-            out = model(batch["lum"], return_activity=penalty is not None) \
-                if is_flyvis else model(batch["lum"])
+            if args.model == "m8":
+                out = model(batch["lum"], k=int(torch.randint(1, args.k_max + 1, (1,)).item()))
+            else:
+                out = model(batch["lum"], return_activity=penalty is not None) \
+                    if is_flyvis else model(batch["lum"])
             losses = l2norm_losses(out, batch)
             loss = sum(losses.values())
             if not torch.isfinite(loss):

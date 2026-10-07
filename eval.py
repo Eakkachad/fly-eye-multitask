@@ -63,6 +63,8 @@ def main(argv=None):
     p.add_argument("--splits", default=str(COURSE_DIR / "splits.json"))
     p.add_argument("--split", default="test", choices=["test", "val"],
                    help="'val' only for debugging this script without touching test")
+    p.add_argument("--k", type=int, default=None,
+                   help="m8 only: GRU inner steps at eval (default k_max); output goes to <split>_k<K>/")
     args = p.parse_args(argv)
     logging.disable(logging.INFO)
 
@@ -75,7 +77,7 @@ def main(argv=None):
     from train import evaluate
 
     run = Path(args.run)
-    out_dir = run / args.split
+    out_dir = run / (args.split if args.k is None else f"{args.split}_k{args.k}")
     if (out_dir / "metrics.json").exists() and not args.force:
         sys.exit(f"{out_dir}/metrics.json exists: test already evaluated (use --force)")
     out_dir.mkdir(exist_ok=True)
@@ -87,6 +89,8 @@ def main(argv=None):
     D.check_disjoint(splits)
     model = models.build_model(a["model"], seed=a["seed"], null_seed=a["null_seed"])
     model.load_state_dict(ck["model"])
+    if args.k is not None:
+        model.k_max = args.k  # m8: default forward K
     model.to("cuda")
     depth_tf = D.DepthTransform.from_config(cfg["depth_transform"])
     ds = D.make_datasets(splits, [], which=(args.split,))[args.split]
