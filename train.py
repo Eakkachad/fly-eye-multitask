@@ -116,6 +116,8 @@ def parse_args(argv=None):
                         "the penalised params (see penalty_grads/penalty_apply)")
     p.add_argument("--fastfly", action="store_true",
                    help="patch the flyvis Network with the fused Triton rollout (fastfly/)")
+    p.add_argument("--compile", choices=["none", "default", "reduce-overhead"], default="none",
+                   help="torch.compile the forward of generic models (needs CC=zigcc/cc here)")
     p.add_argument("--max-minutes", type=float, default=0, help="stop early (0 = off)")
     p.add_argument("--out-dir", default=str(COURSE_DIR / "runs"))
     p.add_argument("--name", default=None)
@@ -266,6 +268,12 @@ def main(argv=None):
             raise SystemExit("--fastfly needs a flyvis model (m1-m3)")
         from fastfly import patch_network
         patch_network(model.network)
+    if args.compile != "none":
+        # R2: compile gives ~5x on M4 and nothing on flyvis; compile forward only so
+        # state_dict keys (checkpoints, eval.py) are unchanged. M8: one graph per K.
+        if is_flyvis:
+            raise SystemExit("--compile is for generic models (m4, m5, m8)")
+        model.forward = torch.compile(model.forward, mode=args.compile)
 
     if is_flyvis:
         groups = model.param_groups(args.lr, args.lr)
