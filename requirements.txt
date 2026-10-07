@@ -1,0 +1,18 @@
+# Python 3.12 requirement
+#
+# PyTorch CUDA Wheel Note:
+# PyTorch 2.14.1 can be installed with CUDA acceleration for generic Linux GPU boxes (e.g. A100 VM):
+#   pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu124  # (or cu121 / cu126 / cu130)
+# Or using uv:
+#   uv pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu124
+#
+# Standard package dependencies (pinned to course environment versions):
+torch==2.14.1
+flyvis==1.2.0
+datamate==1.0.0
+h5py==3.16.0
+numpy==2.5.2
+scipy==1.18.1
+pandas==3.0.6
+matplotlib==3.11.2
+pytest==9.1.1

@@ -4,7 +4,7 @@ Provides:
 - HexConv: 2D convolution over a regular hexagonal lattice (7-neighbourhood).
 - HexConvGRUCell: Recurrent ConvGRU cell on the hexagonal lattice.
 - HexConvGRUNet: Video model with HexConv encoder, temporal ConvGRU, and multi-task heads.
-- make_small / make_large: Model factories matched to target parameter budgets.
+- make_small / make_small_matched / make_large: Model factories matched to target parameter budgets.
 """
 
 import math
@@ -338,6 +338,11 @@ def make_small() -> HexConvGRUNet:
     return HexConvGRUNet(hid_ch=8, n_layers=2, head_ch=8, in_ch=1, extent=15)
 
 
+def make_small_matched() -> HexConvGRUNet:
+    """Factory for param-matched HexConvGRUNet (~15,387 params, within +-5% of M1 connectome model)."""
+    return HexConvGRUNet(hid_ch=15, n_layers=2, head_ch=18, in_ch=1, extent=15)
+
+
 def make_large() -> HexConvGRUNet:
     """Factory for large HexConvGRUNet (400,000 - 1,000,000 params)."""
     return HexConvGRUNet(hid_ch=96, n_layers=3, head_ch=64, in_ch=1, extent=15)
@@ -345,15 +350,21 @@ def make_large() -> HexConvGRUNet:
 
 if __name__ == "__main__":
     small_model = make_small()
+    matched_model = make_small_matched()
     large_model = make_large()
 
     small_p = count_parameters(small_model)
+    matched_p = count_parameters(matched_model)
     large_p = count_parameters(large_model)
 
     print("=== HexConvGRUNet Parameter Counts ===")
     print(f"make_small(): {small_p:,} params (target: 3,000 - 6,000)")
+    print(f"make_small_matched(): {matched_p:,} params (target: 15,387 +- 5% -> [14,618, 16,156])")
     print(f"make_large(): {large_p:,} params (target: 400,000 - 1,000,000)")
 
     assert 3000 <= small_p <= 6000, f"Small model params out of range: {small_p}"
+    assert int(15387 * 0.95) <= matched_p <= int(15387 * 1.05) + 1, (
+        f"Matched model params out of range: {matched_p}"
+    )
     assert 400000 <= large_p <= 1000000, f"Large model params out of range: {large_p}"
     print("All parameter count checks passed!")

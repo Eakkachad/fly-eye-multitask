@@ -22,6 +22,7 @@ from hex_models import (
     get_neighbour_table,
     make_large,
     make_small,
+    make_small_matched,
 )
 from metrics import angular_error_deg, binned, depth_absrel, depth_rmse, epe
 
@@ -43,6 +44,18 @@ def test_param_counts():
     assert (
         400000 <= p_large <= 1000000
     ), f"make_large() params {p_large} out of [400000, 1000000]"
+
+
+def test_make_small_matched_param_counts():
+    """Verify make_small_matched is within +-5% of M1 total params (15,387)."""
+    matched = make_small_matched()
+    p_matched = count_parameters(matched)
+    target = 15387
+    low = target * 0.95
+    high = target * 1.05
+    assert low <= p_matched <= high, (
+        f"make_small_matched() params {p_matched} out of [{low:.1f}, {high:.1f}] (+-5% of {target})"
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -100,7 +113,7 @@ def test_hexconv_border_zero_padding():
 # -----------------------------------------------------------------------------
 # 3. Model Output Shapes & Contract
 # -----------------------------------------------------------------------------
-@pytest.mark.parametrize("factory", [make_small, make_large])
+@pytest.mark.parametrize("factory", [make_small, make_small_matched, make_large])
 @pytest.mark.parametrize("device", AVAILABLE_DEVICES)
 def test_forward_shapes(factory, device):
     """Verify exact output shapes for flow (B, T, 2, N) and depth (B, T, 1, N)."""
@@ -122,7 +135,7 @@ def test_forward_shapes(factory, device):
 # -----------------------------------------------------------------------------
 # 4. Gradient Flow
 # -----------------------------------------------------------------------------
-@pytest.mark.parametrize("factory", [make_small, make_large])
+@pytest.mark.parametrize("factory", [make_small, make_small_matched, make_large])
 @pytest.mark.parametrize("device", AVAILABLE_DEVICES)
 def test_gradient_flow(factory, device):
     """Verify that gradients propagate to inputs and all trainable parameters."""

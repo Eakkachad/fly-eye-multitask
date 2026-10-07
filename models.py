@@ -100,7 +100,8 @@ def build_model(model: str, seed: int = 0, null_seed: Optional[int] = None) -> n
         import hex_models  # type: ignore
 
         torch.manual_seed(seed)
-        return {"m4": hex_models.make_small, "m5": hex_models.make_large}[model]()
+        # M4 is parameter-matched to M1 *including* decoders (15,387): make_small_matched (15,402).
+        return {"m4": hex_models.make_small_matched, "m5": hex_models.make_large}[model]()
     raise ValueError(f"unknown model {model}")
 
 
