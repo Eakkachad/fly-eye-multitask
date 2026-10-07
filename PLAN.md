@@ -56,3 +56,4 @@ No model is tuned on test scenes; hyper-parameters chosen on val only; test eval
   **FAIL** otherwise → present ROADMAP R1 options (b) synthetic-motion curriculum, (c) central/speed-masked flow evaluation,
   (d) lower-resolution flow to the owner; the chosen change is logged as amendment A5 before any grid run.
   Depth val RMSE is reported alongside (not part of the decision).
+- A4 outcome (2026-10-08): **PASS** — best val EPE M1 4.915 (−3.1 %), M4 4.501 (−11.3 %) vs zero-flow 5.074. Flow stays on Sintel. Details: `.orchestra/tasks/C014-probe-REPORT.md` (single seed, noisy val; not a test of H1–H3).
