@@ -1,0 +1,109 @@
+{
+ "batch": 4,
+ "frames": 40,
+ "model": "m1",
+ "device": "NVIDIA GeForce RTX 4060",
+ "s_per_iter_unpatched": 0.12985829790013667,
+ "s_per_iter_patched": 0.051329661099953225,
+ "speedup": 2.5298880825896397,
+ "max_abs_err_activity": 3.5762786865234375e-07,
+ "max_abs_err_out": 5.349516868591309e-06,
+ "max_rel_err_out": 4.308671486796811e-05,
+ "loss_abs_err": 0.0,
+ "grad_table": {
+  "network.nodes_bias": {
+   "max_abs_grad": 7.18329320079647e-05,
+   "abs_err": 9.094947017729282e-11,
+   "unpatched_vs_unpatched_noise": 6.548361852765083e-11,
+   "rel_err": 8.329655099800708e-07
+  },
+  "network.nodes_time_const": {
+   "max_abs_grad": 4.5930610781397263e-07,
+   "abs_err": 8.714806654097629e-12,
+   "unpatched_vs_unpatched_noise": 1.2471801369429159e-11,
+   "rel_err": 7.981501546801226e-08
+  },
+  "network.edges_syn_strength": {
+   "max_abs_grad": 0.005919054616242647,
+   "abs_err": 9.778887033462524e-09,
+   "unpatched_vs_unpatched_noise": 4.190951585769653e-09,
+   "rel_err": 1.652102855518177e-06
+  },
+  "decoder.flow.base.0.weight": {
+   "max_abs_grad": 0.00025341028231196105,
+   "abs_err": 3.055902197957039e-09,
+   "unpatched_vs_unpatched_noise": 2.9103830456733704e-09,
+   "rel_err": 1.2059108928323068e-05
+  },
+  "decoder.flow.base.0.bias": {
+   "max_abs_grad": 8.87666828930378e-10,
+   "abs_err": 1.0350049706175923e-09,
+   "unpatched_vs_unpatched_noise": 1.0095391189679503e-09,
+   "rel_err": 9.479147503573205e-06
+  },
+  "decoder.flow.base.1.weight": {
+   "max_abs_grad": 0.0006909099756740034,
+   "abs_err": 5.820766091346741e-11,
+   "unpatched_vs_unpatched_noise": 5.820766091346741e-11,
+   "rel_err": 8.4247822383349e-08
+  },
+  "decoder.flow.base.1.bias": {
+   "max_abs_grad": 0.0010934934252873063,
+   "abs_err": 1.1641532182693481e-10,
+   "unpatched_vs_unpatched_noise": 1.1641532182693481e-10,
+   "rel_err": 1.0646183976492375e-07
+  },
+  "decoder.flow.decoder.0.weight": {
+   "max_abs_grad": 0.054436638951301575,
+   "abs_err": 3.725290298461914e-08,
+   "unpatched_vs_unpatched_noise": 3.725290298461914e-08,
+   "rel_err": 6.843351041188487e-07
+  },
+  "decoder.flow.decoder.0.bias": {
+   "max_abs_grad": 0.047836385667324066,
+   "abs_err": 0.0,
+   "unpatched_vs_unpatched_noise": 3.725290298461914e-09,
+   "rel_err": 0.0
+  },
+  "decoder.depth.base.0.weight": {
+   "max_abs_grad": 0.0002655947464518249,
+   "abs_err": 3.092281986027956e-09,
+   "unpatched_vs_unpatched_noise": 1.979060471057892e-09,
+   "rel_err": 1.164285825430983e-05
+  },
+  "decoder.depth.base.0.bias": {
+   "max_abs_grad": 7.60337570682168e-10,
+   "abs_err": 1.076841726899147e-09,
+   "unpatched_vs_unpatched_noise": 1.1641532182693481e-10,
+   "rel_err": 9.862311638164039e-06
+  },
+  "decoder.depth.base.1.weight": {
+   "max_abs_grad": 0.0006923312321305275,
+   "abs_err": 5.820766091346741e-11,
+   "unpatched_vs_unpatched_noise": 5.820766091346741e-11,
+   "rel_err": 8.407487371953967e-08
+  },
+  "decoder.depth.base.1.bias": {
+   "max_abs_grad": 0.0010886976961046457,
+   "abs_err": 1.1641532182693481e-10,
+   "unpatched_vs_unpatched_noise": 0.0,
+   "rel_err": 1.0693080571720523e-07
+  },
+  "decoder.depth.decoder.0.weight": {
+   "max_abs_grad": 0.10918755829334259,
+   "abs_err": 1.4156103134155273e-07,
+   "unpatched_vs_unpatched_noise": 1.341104507446289e-07,
+   "rel_err": 1.2964941569737806e-06
+  },
+  "decoder.depth.decoder.0.bias": {
+   "max_abs_grad": 0.09415306150913239,
+   "abs_err": 0.0,
+   "unpatched_vs_unpatched_noise": 0.0,
+   "rel_err": 0.0
+  }
+ },
+ "max_rel_err_grad_floored": 1.2059108928323068e-05,
+ "max_abs_err_grad": 1.4156103134155273e-07,
+ "gate_2x_and_match": true,
+ "peak_mem_MB": 1376.7177734375
+}

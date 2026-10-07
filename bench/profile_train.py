@@ -54,6 +54,8 @@ def parse_args(argv=None):
     p.add_argument("--no-activity-penalty", action="store_true")
     p.add_argument("--penalty-impl", choices=["flyvis", "fused"], default="fused",
                    help="same flag as train.py (see train.penalty_grads)")
+    p.add_argument("--fastfly", action="store_true",
+                   help="patch the flyvis Network with the fused Triton rollout (fastfly/)")
     p.add_argument("--out", default=None, help="JSON output path")
     return p.parse_args(argv)
 
@@ -112,6 +114,11 @@ def main(argv=None):
     depth_tf = D.DepthTransform.from_file()
     model = models.build_model(args.model, seed=args.seed).to(dev)
     is_flyvis = getattr(model, "is_flyvis", False)
+    if args.fastfly:
+        if not is_flyvis:
+            raise SystemExit("--fastfly needs a flyvis model (m1-m3)")
+        from fastfly import patch_network
+        patch_network(model.network)
     groups = (model.param_groups(args.lr, args.lr) if is_flyvis else
               [dict(params=list(model.parameters()), lr=args.lr, name="all")])
     opt = torch.optim.Adam(groups)

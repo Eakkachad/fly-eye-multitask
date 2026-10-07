@@ -63,7 +63,16 @@ def penalty_grads(penalty, activity, iteration):
         penalty.activity_baseline - mean, penalty.below_baseline_penalty_weight,
         penalty.above_baseline_penalty_weight) ** 2).mean()
     params = [p for g in penalty.activity_optim.param_groups for p in g["params"]]
-    return params, torch.autograd.grad(pen, params, retain_graph=True)
+    net = penalty.network
+    skip = None
+    if "_fastfly_orig_forward" in net.__dict__ and not any(
+            p is net.edges_syn_strength for p in params):
+        from fastfly import skip_edge_grads  # fused rollout: skip the per-edge weight grad
+        skip = skip_edge_grads()
+    if skip is None:
+        return params, torch.autograd.grad(pen, params, retain_graph=True)
+    with skip:
+        return params, torch.autograd.grad(pen, params, retain_graph=True)
 
 
 def penalty_apply(penalty, grads, lr):
@@ -101,6 +110,8 @@ def parse_args(argv=None):
                    help="flyvis: original flyvis Penalty call after opt.step; fused: "
                         "same maths, penalty grad taken before opt.step restricted to "
                         "the penalised params (see penalty_grads/penalty_apply)")
+    p.add_argument("--fastfly", action="store_true",
+                   help="patch the flyvis Network with the fused Triton rollout (fastfly/)")
     p.add_argument("--max-minutes", type=float, default=0, help="stop early (0 = off)")
     p.add_argument("--out-dir", default=str(COURSE_DIR / "runs"))
     p.add_argument("--name", default=None)
@@ -243,6 +254,11 @@ def main(argv=None):
     dev = torch.device("cuda")
     model.to(dev)
     is_flyvis = getattr(model, "is_flyvis", False)
+    if args.fastfly:
+        if not is_flyvis:
+            raise SystemExit("--fastfly needs a flyvis model (m1-m3)")
+        from fastfly import patch_network
+        patch_network(model.network)
 
     if is_flyvis:
         groups = model.param_groups(args.lr, args.lr)
