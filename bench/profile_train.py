@@ -52,6 +52,8 @@ def parse_args(argv=None):
     p.add_argument("--lr", type=float, default=5e-5)
     p.add_argument("--data-fraction", type=float, default=1.0)
     p.add_argument("--no-activity-penalty", action="store_true")
+    p.add_argument("--penalty-impl", choices=["flyvis", "fused"], default="fused",
+                   help="same flag as train.py (see train.penalty_grads)")
     p.add_argument("--out", default=None, help="JSON output path")
     return p.parse_args(argv)
 
@@ -138,7 +140,7 @@ def main(argv=None):
     fwd_model = model
     result = dict(
         config=dict(vars(args), versions=T.versions(), n_params=models.n_trainable(model),
-                    activity_penalty=penalty is not None,
+                    activity_penalty=penalty is not None, penalty_impl=args.penalty_impl,
                     n_train_sequences=len(ds)),
         status="ok")
     out_path = Path(args.out) if args.out else None
@@ -197,17 +199,23 @@ def main(argv=None):
                                   for k, v in out.items()}, b)
         loss = sum(losses.values())
         clock.mark()
+        fused = penalty is not None and args.penalty_impl == "fused"
+        pgrads = T.penalty_grads(penalty, out["activity"], it) if fused else None
+        keep = penalty is not None and not fused
         if scaler:
-            scaler.scale(loss).backward(retain_graph=penalty is not None)
+            scaler.scale(loss).backward(retain_graph=keep)
         else:
-            loss.backward(retain_graph=penalty is not None)
+            loss.backward(retain_graph=keep)
         clock.mark()
         if scaler:
             scaler.step(opt)
             scaler.update()
         else:
             opt.step()
-        if penalty is not None:
+        if fused:
+            if pgrads is not None:
+                T.penalty_apply(penalty, pgrads, args.lr)
+        elif penalty is not None:
             penalty(activity=out["activity"], iteration=it)
         clock.mark()
         return loss.detach(), losses

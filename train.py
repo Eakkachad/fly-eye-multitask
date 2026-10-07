@@ -39,6 +39,45 @@ COURSE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(COURSE_DIR))
 
 
+
+def penalty_grads(penalty, activity, iteration):
+    """Fused-impl part 1: activity-penalty gradient w.r.t. ONLY the penalised params
+    (flyvis Penalty.activity_penalty_step maths), computed BEFORE opt.step.
+
+    Equivalent to flyvis: there the penalty backward runs after opt.step but through
+    the graph saved at forward time (autograd saved tensors are the pre-step values),
+    so the gradient is the same; restricting to `inputs` skips the weight/time-const/
+    decoder grad work. Returns None when inactive (stop_iter reached)."""
+    import torch
+    from flyvis.solver import asymmetric_weighting
+
+    if penalty.activity_optim is None:
+        return None
+    if (penalty.activity_penalty_stop_iter is not None
+            and iteration >= penalty.activity_penalty_stop_iter):
+        penalty.activity_optim = None  # same as Penalty.__call__: permanently off
+        return None
+    n_frames = activity.shape[1]
+    mean = activity[:, n_frames // 4:, penalty.central_cells_index].mean(dim=1)
+    pen = penalty.activity_penalty * (asymmetric_weighting(
+        penalty.activity_baseline - mean, penalty.below_baseline_penalty_weight,
+        penalty.above_baseline_penalty_weight) ** 2).mean()
+    params = [p for g in penalty.activity_optim.param_groups for p in g["params"]]
+    return params, torch.autograd.grad(pen, params, retain_graph=True)
+
+
+def penalty_apply(penalty, grads, lr):
+    """Fused-impl part 2 (after opt.step): SGD step of the penalty optimizer with the
+    precomputed grads at lr, then network.clamp(), like Penalty.activity_penalty_step."""
+    params, gs = grads
+    for g in penalty.activity_optim.param_groups:
+        g["lr"] = lr
+    for p, g in zip(params, gs):
+        p.grad = g
+    penalty.activity_optim.step()
+    penalty.network.clamp()
+
+
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -58,6 +97,10 @@ def parse_args(argv=None):
     p.add_argument("--ss-every", type=int, default=0,
                    help="recompute flyvis steady state every k iters (0 = once per epoch)")
     p.add_argument("--no-activity-penalty", action="store_true")
+    p.add_argument("--penalty-impl", choices=["flyvis", "fused"], default="fused",
+                   help="flyvis: original flyvis Penalty call after opt.step; fused: "
+                        "same maths, penalty grad taken before opt.step restricted to "
+                        "the penalised params (see penalty_grads/penalty_apply)")
     p.add_argument("--max-minutes", type=float, default=0, help="stop early (0 = off)")
     p.add_argument("--out-dir", default=str(COURSE_DIR / "runs"))
     p.add_argument("--name", default=None)
@@ -287,23 +330,38 @@ def main(argv=None):
             if not torch.isfinite(loss):
                 status = "diverged"
                 break
-            loss.backward(retain_graph=penalty is not None)
+            fused = penalty is not None and args.penalty_impl == "fused"
+            pgrads = None
+            if fused:
+                pgrads = penalty_grads(penalty, out["activity"], it)
+            loss.backward(retain_graph=penalty is not None and not fused)
             opt.step()
-            if penalty is not None:
+            if fused:
+                if pgrads is not None:
+                    penalty_apply(penalty, pgrads, lr)
+            elif penalty is not None:
                 if penalty.activity_optim is not None:
                     for g in penalty.activity_optim.param_groups:
                         g["lr"] = lr
                 penalty(activity=out["activity"], iteration=it)
-            torch.cuda.synchronize()
+            if fused:
+                # logs stay on the GPU; host sync only at the log interval
+                acc["loss"] += loss.detach()
+                acc["flow"] += losses["flow"].detach() * 2
+                acc["depth"] += losses["depth"].detach() * 2
+                if (it + 1) % args.log_every == 0:
+                    torch.cuda.synchronize()
+            else:
+                torch.cuda.synchronize()
+                acc["loss"] += float(loss)
+                acc["flow"] += float(losses["flow"]) * 2
+                acc["depth"] += float(losses["depth"]) * 2
             comp_t += time.time() - tc
-            acc["loss"] += float(loss)
-            acc["flow"] += float(losses["flow"]) * 2
-            acc["depth"] += float(losses["depth"]) * 2
             acc["n"] += 1
             it += 1
             if it % args.log_every == 0:
                 n = acc.pop("n")
-                rec = {k: v / n for k, v in acc.items()}
+                rec = {k: float(v) / n for k, v in acc.items()}
                 rec.update(iter=it, lr=lr, wall_s=time.time() - t0,
                            s_per_iter=(time.time() - t0) / it,
                            data_s_per_iter=data_t / it, compute_s_per_iter=comp_t / it)
