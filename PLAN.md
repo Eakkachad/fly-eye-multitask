@@ -48,3 +48,11 @@ No model is tuned on test scenes; hyper-parameters chosen on val only; test eval
 - A2 (2026-10-05): Smoke test showed no model beats zero-flow on val at 2k iterations. A learnability probe (M1, M4 @ 10k iters) on the A100 decides whether the flow task stays on Sintel or moves to flyvis synthetic motion stimuli (depth stays on Sintel). Any change will be recorded here **before** the full grid.
 - A3 (2026-10-05): The pretrained flyvis (M0) has seen bandage_2, cave_2, market_5 and market_6 in training. It is reported only on unseen scenes.
 - Note: the deadline in the header (2026-10-09) refers to the original 4-day plan. The actual course deadlines are tracked in docs/TEAM.md.
+- A4 (2026-10-07, pre-registration of the learnability probe, C014 — written before running): runs on the local RTX 4060 (A100 not yet available).
+  Runs: M1 and M4, seed 0, `--n-iters 10000 --lr 5e-4 --val-every 1000`, all other flags default, full train split; output `runs_probe/`.
+  (lr 5e-4: middle of the 2k-iter LR probe grid 5e-5/5e-4/2e-3, which showed no clear winner.)
+  Metric: best val flow EPE (val only; test untouched). Reference: zero-flow val EPE 5.074.
+  **PASS** if at least one model reaches val EPE ≤ 4.97 (≥ 2 % below zero-flow) → keep Sintel flow for the grid.
+  **FAIL** otherwise → present ROADMAP R1 options (b) synthetic-motion curriculum, (c) central/speed-masked flow evaluation,
+  (d) lower-resolution flow to the owner; the chosen change is logged as amendment A5 before any grid run.
+  Depth val RMSE is reported alongside (not part of the decision).
