@@ -37,3 +37,16 @@ done as many separate memory-bound kernels, each re-reading the edge arrays.
 | penalty, fused path (default now; equivalence-tested) | 0.177 (1.13×) | 1.39 |
 | no penalty (reference only) | 0.135 | 1.32 |
 The penalty is active only for the first 60 % of iterations, so the whole-run saving is smaller than 1.13×.
+
+## Update — fused Triton rollout `fastfly/` (C023) — **passes the gate (≥ 2× + parity)**
+| M1 bs4, 40 frames, penalty (fused impl) | s/iter | VRAM GB |
+|---|---|---|
+| PyTorch flyvis | 0.177 | 1.39 |
+| `--fastfly` (Triton) | **0.0738 (2.40×)** | 0.48 |
+Overall vs the original R2 baseline 0.202 s/iter: **2.7×**. Parity: outputs ~1e-7 rel (CPU interpreter), grads 4e-7 rel; fixed-batch losses after
+training identical to ~1e-7. What it does: one autograd Function for the whole rollout; CSR by target, gather+relu+mul+segment-sum+Euler fused
+per step, batch processed as a tile (each edge loaded once), reverse-time backward with by-target and by-source (CSR-transpose) kernels, and a
+segment-sum backward for the 1.5 M-edge → 604 type-pair weight expansion. Graph: 45,669 nodes, 1,513,231 edges, in-degree mean 33 / max 208.
+Needs `CC=$HOME/flyproj/tools/zigcc/cc` (+ zigcc on PATH) for Triton on this machine.
+Rust/cudarc version: not built. Remaining M1 step after fastfly is ~25 % kernel time, so a Rust port of the same algorithm has little headroom;
+a persistent whole-rollout kernel (state kept on-chip) is the only Rust-specific idea left (estimate, unmeasured).
