@@ -29,3 +29,11 @@ done as many separate memory-bound kernels, each re-reading the edge arrays.
 3. M1–M3: compile does not help; the cost is memory-bound sparse gather/scatter. The activity penalty costs 1/3 of the step.
    The remaining lever is a **fused message-passing kernel with a hand-written backward** (one pass over edges per ODE step instead of ~6).
    This is the only place where custom GPU code (Triton, or Rust cudarc+NVRTC as in kagpt-fly brain-sim-gpu) can plausibly win ≥ 2×. Not yet built or measured.
+
+## Update — activity penalty kept, fused implementation (C022)
+| M1 bs4 | s/iter | VRAM |
+|---|---|---|
+| penalty, original flyvis path | 0.200 | 1.53 |
+| penalty, fused path (default now; equivalence-tested) | 0.177 (1.13×) | 1.39 |
+| no penalty (reference only) | 0.135 | 1.32 |
+The penalty is active only for the first 60 % of iterations, so the whole-run saving is smaller than 1.13×.
