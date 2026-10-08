@@ -85,3 +85,8 @@ No model is tuned on test scenes; hyper-parameters chosen on val only; test eval
   5. **Ablation-superposition probe + divergence/curl (L3)** (notes 556/359): silence cell-type / channel groups, test additivity with cosine
      AND magnitude ratio; EPE vs fraction silenced; divergence/curl of predicted vs GT flow on the hex lattice; looming vs predicted depth.
   Grid becomes 24 + M6/M7 (6) + M6f/M7f (6) + M8 (3) = 39 runs, 3 seeds each arm.
+- A7 (2026-10-08, owner-approved, before the grid): grid runs locally on the RTX 4060 (`scripts/run_grid_local.sh`, `scripts/grid_v2.tsv`, 39 runs).
+  **lr 5e-4** for all arms (the probe-validated value; the original 5e-5 was never tested beyond 2k iters), 30k iters, val every 1k, batch 4,
+  best checkpoint by total val loss. Speed flags (numerically equivalent, R2): `--fastfly` for flyvis-based arms (M1–M3, M6/M7, M6f/M7f),
+  fused penalty implementation (default), `--compile default` for M4/M5/M8. M6f/M7f use the grid's own M1/M2 `best.pt` of the same seed.
+  No per-arm lr retuning (time budget) — listed as a limitation.
