@@ -90,3 +90,7 @@ No model is tuned on test scenes; hyper-parameters chosen on val only; test eval
   best checkpoint by total val loss. Speed flags (numerically equivalent, R2): `--fastfly` for flyvis-based arms (M1–M3, M6/M7, M6f/M7f),
   fused penalty implementation (default), `--compile default` for M4/M5/M8. M6f/M7f use the grid's own M1/M2 `best.pt` of the same seed.
   No per-arm lr retuning (time budget) — listed as a limitation.
+- A8 (2026-10-08, owner-approved, mid-grid, speed only): hybrid arms (M6/M7/M6f/M7f) get `--compile default` on the HexConvGRU trunk
+  (measured 0.188 → 0.069 s/iter; loss after 400 iters 717.74 vs 717.51 — compile is not bit-identical). For consistency within the hybrid arms,
+  the two hybrid runs already finished without compile (m6_s0, m7_s0) are **re-run** with it; the eager runs are kept in `runs_eager_ref/`
+  as a reproducibility reference only (not reported as results). No other arm is affected.

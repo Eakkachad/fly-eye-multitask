@@ -271,9 +271,14 @@ def main(argv=None):
     if args.compile != "none":
         # R2: compile gives ~5x on M4 and nothing on flyvis; compile forward only so
         # state_dict keys (checkpoints, eval.py) are unchanged. M8: one graph per K.
-        if is_flyvis:
-            raise SystemExit("--compile is for generic models (m4, m5, m8)")
-        model.forward = torch.compile(model.forward, mode=args.compile)
+        if is_flyvis and hasattr(model, "trunk"):
+            # hybrids (m6/m7/m6f/m7f): compile only the HexConvGRU trunk (A8);
+            # the flyvis front-end uses --fastfly instead
+            model.trunk.forward = torch.compile(model.trunk.forward, mode=args.compile)
+        elif is_flyvis:
+            raise SystemExit("--compile is for generic models and hybrid trunks")
+        else:
+            model.forward = torch.compile(model.forward, mode=args.compile)
 
     if is_flyvis:
         groups = model.param_groups(args.lr, args.lr)

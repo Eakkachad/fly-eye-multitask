@@ -27,4 +27,4 @@ grep -v '^#' "$GRID" | while IFS=$'\t' read -r name model seed frac extra th; do
   st=$(grep -o '"status": "[a-z_]*"' $OUT/$name/summary.json 2>/dev/null)
   echo "END $name rc=$rc $st $(date -Is)" | tee -a $LOG
 done
-echo "GRID_DONE $(date -Is)" | tee -a $LOG
+if [ -f "$HOME/flyproj/.orchestra/GRID_PAUSE" ]; then echo "STOPPED (paused) $(date -Is)" | tee -a $LOG; else echo "GRID_DONE $(date -Is)" | tee -a $LOG; fi
