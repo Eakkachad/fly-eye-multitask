@@ -39,6 +39,25 @@
 - `make_large()` มี **604,835 พารามิเตอร์** มากกว่า M1 ประมาณ 40 เท่า
 - **คำถามที่ตอบ:** ถ้าเพิ่ม compute และพารามิเตอร์ให้ deep learning ทั่วไป มันจะชนะ prior จาก connectome ไหม และต้องใช้ข้อมูลมากกว่าเท่าไร
 
+## M6 / M7 — Hybrid: front-end connectome + HexConvGRU (PLAN A5; H4, H5)
+- **M6:** โครงข่าย flyvis ที่ใช้ connectome จริง (เหมือน M1 รวม activity penalty) → activity ที่ผ่าน rectifier ของเซลล์ชนิดปลายทางบนทั้ง 721 hexal → trunk HexConvGRU ที่ใช้ร่วมกัน → head ของ flow และ depth
+- **M7:** เหมือน M6 แต่ใช้ connectome แบบ rewired ของ M2 (control ที่แยก "wiring จริง" ออกจาก "front-end แบบ recurrent ที่เพิ่มเข้ามา")
+- **ขนาด:** 15,423 พารามิเตอร์ (ใกล้ M1/M4)
+- **H4:** M6 ชนะ M4 · **H5:** M6 ชนะ M7 ครบ 3/3 seed ถ้า H4 ผ่านแต่ H5 ไม่ผ่าน แปลว่าประโยชน์มาจากสถาปัตยกรรม ไม่ใช่ wiring
+- **หมายเหตุ:** เพิ่มหลังเห็นผล probe (post-probe, pre-grid) ระบุไว้ใน PLAN A5
+
+## M6f / M7f — Frozen front-end + residual (PLAN A6.2; H7)
+- front-end = checkpoint ที่ train แล้วของ M1 (M6f) หรือ M2 (M7f) ใน seed เดียวกัน **freeze** ทั้งโครงข่ายและ decoder
+- output = output ของ decoder ที่ freeze + residual จาก trunk HexConvGRU ที่ layer สุดท้าย **zero-init** จึงเริ่ม train ที่คำตอบของ M1/M2 พอดี
+- **train ได้ 14,689 พารามิเตอร์** รายงานทั้ง front-end อย่างเดียวและผลสุดท้าย · **H7:** M6f ชนะ M7f บน test flow EPE ครบ 3/3 seed
+- ต้อง train หลัง M1/M2 ของ grid (ใช้ `--frontend-ckpt runs/<m1|m2 run>/best.pt`)
+
+## M8 — HexConvGRU-K (PLAN A6.3; H6)
+- สถาปัตยกรรม/พารามิเตอร์แบบ M4 (**15,402**) แต่วน GRU cell K ครั้งต่อเฟรม โดยใช้ weight ร่วมกันและป้อน input จาก encoder ซ้ำ
+- train ด้วย K ~ U{1..4} (`--k-max 4`) ประเมินที่ K = 1..4 เป็นกราฟ any-time (`eval.py --k K`) ค่าหลักคือ K = 4
+- **H6:** M8 (K=4) ชนะ M4 บน test flow EPE อย่างน้อย 2/3 seed
+- ไอเดียของ M6f/M7f/M8 มาจากการขุดบันทึกวิจัยของ katgpt-rs (หมายเลขบันทึกอยู่ใน PLAN A6)
+
 ## (อ้างอิง) M0 — flyvis pretrained
 - เป็นโมเดลที่ทีมผู้พัฒนา flyvis train มาแล้ว (250k iteration, flow อย่างเดียว) **ไม่ได้ train โดยเรา** ใช้เป็นแค่ค่าอ้างอิงของ flow
 - **ข้อจำกัด:** เคยเห็นฉากทดสอบบางฉากแล้ว (ดู [DATA.md](DATA.md))
@@ -51,9 +70,9 @@
 | จำนวน iteration, batch size, optimizer | ✅ |
 | การเลือก lr | บน validation เท่านั้น |
 | จำนวน seed | 3 seed ต่อการตั้งค่า |
-| พารามิเตอร์ | M1 = M2 = M3 ≈ M4 · M5 ใหญ่กว่าโดยตั้งใจ |
+| พารามิเตอร์ | M1 = M2 = M3 ≈ M4 ≈ M6/M7/M8 (~15.4k) · M6f/M7f train ได้ 14,689 · M5 ใหญ่กว่าโดยตั้งใจ |
 
-## ความเร็วที่วัดได้ (RTX 4060, B = 4, ไม่มีงานอื่นรันพร้อมกัน)
+## ความเร็วที่วัดได้ก่อนปรับปรุง (RTX 4060, B = 4, ไม่มีงานอื่นรันพร้อมกัน)
 | โมเดล | วินาที/iteration | VRAM |
 |---|---|---|
 | M1–M3 | 0.18 | 2.45 GB |
@@ -62,3 +81,13 @@
 
 - คอขวดคือ GPU ไม่ใช่การโหลดข้อมูล (0.007 s ต่อ batch)
 - การรันหลายงานพร้อมกันบน 4060 ไม่ได้ช่วยเพิ่ม throughput เพราะ GPU ทำงานเต็ม 100% อยู่แล้ว
+
+### หลังเร่งความเร็ว (R2, ดู [R2_BENCHMARK.md](R2_BENCHMARK.md))
+| โมเดล | วินาที/iteration | วิธี |
+|---|---|---|
+| M1 | 0.177 → 0.074 (2.40x) | `--fastfly` (Triton fused rollout, ตรวจ parity แล้ว) |
+| M4 | 0.030 ใน train.py (5x) | `--compile default` |
+| M5 | เร็วขึ้น 3.8x | `--compile default` |
+| M8 | 0.064 (หลัง compile ~25 นาที) | `--compile default` |
+
+- fused penalty เร็วขึ้น 1.13x; bf16/tf32 ไม่ช่วย

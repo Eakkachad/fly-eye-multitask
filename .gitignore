@@ -10,3 +10,4 @@ runs_smoke/
 runs_probe/
 bench/results/
 floors_out/
+bench/results_matrix.log

@@ -5,7 +5,7 @@
 
 ## Project Overview
 
-Given a short grayscale video sequence as seen by the fruit fly eye—modeled as a regular hexagonal photoreceptor lattice of 721 ommatidia (hexals) spanning 19 frames at 50 Hz—this project investigates whether biological connectome wiring acts as an effective inductive bias for multi-task video perception. The network must integrate temporal information across frames to jointly predict pixel-wise **optic flow** (2-D vector per hexal) and **depth** (scalar per hexal) at the final frames. We evaluate five architectures under an identical experimental protocol: the real connectome dynamical network (**M1**), a degree-preserving rewired structural null (**M2**), an Erdős–Rényi random type-graph null (**M3**), a parameter-matched hexagonal ConvGRU network (**M4**), and an overparameterized deep ConvGRU baseline (**M5**).
+Given a short grayscale video sequence as seen by the fruit fly eye—modeled as a regular hexagonal photoreceptor lattice of 721 ommatidia (hexals) spanning 19 frames at 50 Hz—this project investigates whether biological connectome wiring acts as an effective inductive bias for multi-task video perception. The network must integrate temporal information across frames to jointly predict pixel-wise **optic flow** (2-D vector per hexal) and **depth** (scalar per hexal) at the final frames. We evaluate five core architectures (plus hybrid/any-time variants M6, M7, M6f, M7f, M8; see `docs/MODELS.md`) under an identical experimental protocol: the real connectome dynamical network (**M1**), a degree-preserving rewired structural null (**M2**), an Erdős–Rényi random type-graph null (**M3**), a parameter-matched hexagonal ConvGRU network (**M4**), and an overparameterized deep ConvGRU baseline (**M5**).
 
 The core scientific question is whether the connectome prior can replace both raw parameters and training data. We test three pre-registered hypotheses: (H1) whether the real connectome (M1) outperforms structural nulls (M2/M3) across paired random seeds; (H2) whether M1 outperforms a standard deep learning model matched for parameter budget (M4); and (H3) whether connectome-constrained networks achieve superior sample efficiency when training data is restricted to 25% of training scenes. All models are trained from scratch using identical multi-task decoder heads, L2-norm loss objectives, Adam optimizer schedules, and pre-registered scene-level data splits on the MPI Sintel benchmark.
 
@@ -20,8 +20,11 @@ To run the test suite on CPU only:
 # Set CUDA_VISIBLE_DEVICES="" for all local commands
 export CUDA_VISIBLE_DEVICES=""
 
-# Run test suites on CPU
-/home/user/flyproj/.venv/bin/python -m pytest -q tests baselines/test_baselines.py
+# Run test suites on CPU (47 tests)
+/home/user/flyproj/.venv/bin/python -m pytest -q tests baselines/test_baselines.py --ignore=tests/test_fastfly.py
+
+# Fused Triton rollout tests (Triton interpreter, ~2 min)
+/home/user/flyproj/.venv/bin/python -m pytest -q tests/test_fastfly.py
 ```
 
 ### 2. Remote Setup (A100 VM / Generic Linux GPU Machine)
@@ -49,7 +52,24 @@ DATA_DIR=/mnt/fast_storage/sintel bash scripts/setup_remote.sh
 
 ---
 
-## Experiment Grid
+## Experiment Grid (current: local grid, 39 runs, PLAN A7)
+
+The grid actually being run is `scripts/grid_v2.tsv` (39 runs, 3 seeds per arm) on the local RTX 4060, via `scripts/run_grid_local.sh`:
+- Full data: M1, M2, M3, M4, M5, M6, M7, M6f, M7f, M8 x seeds 0-2 (30 runs); data-efficiency arm (0.25 fraction): M1, M2, M5 x seeds 0-2 (9 runs).
+- lr 5e-4, 30k iterations, val every 1k, batch 4; best checkpoint by total val loss.
+- Speed flags: `--fastfly` (flyvis-based arms), `--compile default` (M4, M5, M8). M6f/M7f take `--frontend-ckpt runs/<m1|m2 run>/best.pt` of the same seed, so they run after M1/M2.
+- Estimated ~31-35 h total. Resumable: runs whose `summary.json` says `completed` are skipped. A per-run timeout and a 45-min stall watchdog are built in.
+
+```bash
+scripts/run_grid_local.sh                      # start / resume
+touch ~/flyproj/.orchestra/GRID_PAUSE          # pause: stops before the next run
+rm ~/flyproj/.orchestra/GRID_PAUSE && scripts/run_grid_local.sh   # resume (completed runs are skipped)
+```
+
+Triton needs a C compiler; this machine has no system gcc, so the runner exports `CC=$HOME/flyproj/tools/zigcc/cc` (set it yourself for manual `--fastfly` / `--compile` runs).
+`train.py` model choices: `m1 m2 m3 m4 m5 m6 m7 m6f m7f m8`; also `--k-max` (M8), `--penalty-impl {flyvis,fused}`, `--compile {none,default,reduce-overhead}`.
+
+### Original 24-run grid (A100 / SLURM)
 
 The full pre-registered experiment grid is defined in `scripts/grid.tsv` across 24 configurations:
 - **Full Data (1.0 fraction)**: Models `m1`, `m2`, `m3`, `m4`, `m5` across seeds `0`, `1`, `2` (15 runs).
@@ -108,6 +128,15 @@ python eval.py runs/m1_s0_f1.0 --split val
 
 # Force re-evaluation if necessary
 python eval.py runs/m1_s0_f1.0 --force
+
+# M8 only: evaluate at K inner GRU steps (any-time curve), output in test_k<K>/
+python eval.py runs/m8_s0_f1.0 --k 2
+```
+
+### Floors (non-learned baselines, PLAN A6.1)
+```bash
+python floors.py --split val                 # zero / train-mean / LK-on-hex / oracle-CV flow, mean depth floors
+python floors.py --split test --once         # once, after the grid (--force needs --reason)
 ```
 
 ### Generated Artifacts
@@ -129,7 +158,7 @@ To reproduce the study from scratch on a remote CUDA box:
 2. **M4** already uses `hex_models.make_small_matched` (15,402 params, matched to M1's 15,387).
 3. **Execute Training Grid**:
    ```bash
-   JOBS_PER_GPU=2 scripts/run_grid.sh
+   JOBS_PER_GPU=2 scripts/run_grid.sh   # original 24-run grid; or scripts/run_grid_local.sh for the 39-run local grid
    ```
 4. **Evaluate Test Splits**:
    ```bash
