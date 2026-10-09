@@ -35,6 +35,7 @@
 | [docs/MODELS.md](docs/MODELS.md) | รายละเอียดโมเดล M1–M8 และความเป็นธรรมของการเปรียบเทียบ | ฝ่ายโมเดล |
 | [docs/EVALUATION.md](docs/EVALUATION.md) | ตัวชี้วัด, protocol, error analysis, ข้อจำกัด | ฝ่ายประเมินผล |
 | [docs/TEAM.md](docs/TEAM.md) | บทบาท 8 คน, กำหนดการ, คำถามที่น่าจะโดนถาม | ทุกคน |
+| [docs/METHODS_OVERVIEW.md](docs/METHODS_OVERVIEW.md) | วิธีการที่ implement และสถานะโปรเจกต์ (ภาพรวม, แนวโน้ม val, ผลที่คาดหวัง) | ทุกคน, อาจารย์ |
 | [docs/STATUS.md](docs/STATUS.md) | อะไรเสร็จแล้ว, ผลเบื้องต้น, ความเสี่ยง, ขั้นต่อไป | ทุกคน |
 | [docs/PROBE_C014.md](docs/PROBE_C014.md) | ผล learnability probe (A4) | ทุกคน |
 | [docs/R2_BENCHMARK.md](docs/R2_BENCHMARK.md) | เบนช์มาร์กความเร็ว (fastfly, compile) | ฝ่าย engineering |

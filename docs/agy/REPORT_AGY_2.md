@@ -86,7 +86,7 @@ Pinned packages match the local environment:
 ### `scripts/setup_remote.sh`
 - **Idempotency**: Detects existing venvs and existing extracted directories (`training/final`, `training/flow`, `training/depth`, `test`) to avoid redundant downloads or overwrites.
 - **Venv Creation**: Uses `uv venv` if `uv` is available, falling back to `python3 -m venv`.
-- **Download & Extraction**: Uses `curl -fSL -C - -A "kagpt-fly-research"` to resume interrupted downloads. Extracts archives via Python's built-in `zipfile.ZipFile` module and cleans up zip archives.
+- **Download & Extraction**: Uses `curl -fSL -C - -A "fly-eye-multitask-research"` to resume interrupted downloads. Extracts archives via Python's built-in `zipfile.ZipFile` module and cleans up zip archives.
 - **Link & Graph Initialization**: Reads `flyvis.sintel_dir` dynamically and symlinks to `DATA_DIR` (supports `DATA_DIR` override); precomputes M2/M3 null connectomes for seeds 0, 1, 2; runs `pytest -q tests`.
 
 ### `scripts/grid.tsv`

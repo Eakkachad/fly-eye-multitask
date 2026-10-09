@@ -40,7 +40,7 @@ No model is tuned on test scenes; hyper-parameters chosen on val only; test eval
 
 ## Engineering
 - Training: PyTorch (autodiff) via flyvis; several runs concurrently on the RTX 4060 (0.05 s/iter, 0.7 GB/run measured).
-- Rust: used where profiling shows a real bottleneck (data rendering/augmentation, evaluation over all test frames), via PyO3; the null connectome generator reuses the kagpt-fly `nulls` methodology. Not forced where PyTorch is the right tool.
+- Rust: used where profiling shows a real bottleneck (data rendering/augmentation, evaluation over all test frames), via PyO3; the null connectome generator follows the degree-preserving rewiring methodology of our earlier Rust/CUDA GPU engine (Maslov & Sneppen 2002). Not forced where PyTorch is the right tool.
 - Every run logs config, seed, package versions, peak VRAM, wall time (experiments/<run>/).
 
 ## Amendments (logged before any full training run)
@@ -68,21 +68,21 @@ No model is tuned on test scenes; hyper-parameters chosen on val only; test eval
   - **H4:** M6 beats M4 on both val-selected test metrics (flow EPE, depth RMSE), mean over 3 seeds and ≥ 2/3 paired seeds.
   - **H5:** M6 beats M7 on flow EPE in 3/3 paired seeds (connectome-specific benefit). If H4 holds but H5 fails, we report that the gain comes
     from the architecture, not the wiring.
-- A6 (2026-10-08, owner-approved, before any grid run; ideas mined from katgpt-rs `.research/`, see `.orchestra/ideas/katgpt_research_ideas.md`):
-  1. **Claim ladder** (notes 287/503/506/488/592): every claim in the report is tagged **L1** = pre-registered + test set, **L2** = pre-registered but
+- A6 (2026-10-08, owner-approved, before any grid run; methodology ideas drawn from the group's methodology notes and the published literature cited below):
+  1. **Claim ladder** (pre-registration: Nosek et al., "The preregistration revolution", PNAS 2018): every claim in the report is tagged **L1** = pre-registered + test set, **L2** = pre-registered but
      val-only or partial, **L3** = exploratory. **Floors** registered now, reported on test alongside models:
-     flow — zero-flow, train-mean flow, Lucas–Kanade on the hex lattice (classical, no learning); *oracle* constant-velocity (previous-frame GT flow;
+     flow — zero-flow, train-mean flow, Lucas–Kanade (Lucas & Kanade, IJCAI 1981) on the hex lattice (classical, no learning); *oracle* constant-velocity (previous-frame GT flow;
      labelled oracle, not a competitor); depth — train-mean, per-hexal train-mean. Models are reported as margin over the best non-oracle floor.
-  2. **Frozen-front-end residual hybrids M6f/M7f** (notes 553/477/259): front-end = trained M1 (resp. M2) checkpoint of the same seed, frozen
+  2. **Frozen-front-end residual hybrids M6f/M7f** (zero-initialised residual on a frozen base: Zhang, Rao & Agrawala, "Adding Conditional Control to Text-to-Image Diffusion Models" (ControlNet, zero convolutions), ICCV 2023; Johannink et al., "Residual Reinforcement Learning for Robot Control", ICRA 2019): front-end = trained M1 (resp. M2) checkpoint of the same seed, frozen
      (network + its decoders, penalty off); output = frozen decoder output + residual from a HexConvGRU trunk (as M6) whose last layer is
      zero-initialised, so training starts exactly at the M1/M2 solution. Report front-end-only and final. Trained after M1/M2 of the grid.
      **H7:** M6f beats M7f on test flow EPE in 3/3 paired seeds.
-  3. **M8 = HexConvGRU-K** (notes 519/273/592/073): M4 architecture/params, the GRU cell iterated K times per frame with tied weights and
+  3. **M8 = HexConvGRU-K** (recurrent depth / weight-tied iteration: Dehghani et al., "Universal Transformers", ICLR 2019; Geiping et al., "Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach", arXiv:2502.05171, 2025): M4 architecture/params, the GRU cell iterated K times per frame with tied weights and
      re-injected encoder input; train with K ~ U{1..4}; evaluate at K = 1..4 (any-time curve). Primary: K = 4.
      **H6:** M8 (K=4) beats M4 on test flow EPE in ≥ 2/3 paired seeds.
   4. **Diagnostics (L3, exploratory, no retraining)** on final checkpoints: front-end necessity (zeroing/ablating input cell-type groups),
-     CKA between models with a seed-vs-seed band, recurrent-state stability (notes 555/460/501/515/286/324).
-  5. **Ablation-superposition probe + divergence/curl (L3)** (notes 556/359): silence cell-type / channel groups, test additivity with cosine
+     CKA between models with a seed-vs-seed band, recurrent-state stability (representation similarity: Kornblith et al., "Similarity of Neural Network Representations Revisited" (CKA), ICML 2019).
+  5. **Ablation-superposition probe + divergence/curl (L3)**: silence cell-type / channel groups, test additivity with cosine
      AND magnitude ratio; EPE vs fraction silenced; divergence/curl of predicted vs GT flow on the hex lattice; looming vs predicted depth.
   Grid becomes 24 + M6/M7 (6) + M6f/M7f (6) + M8 (3) = 39 runs, 3 seeds each arm.
 - A7 (2026-10-08, owner-approved, before the grid): grid runs locally on the RTX 4060 (`scripts/run_grid_local.sh`, `scripts/grid_v2.tsv`, 39 runs).
@@ -94,3 +94,4 @@ No model is tuned on test scenes; hyper-parameters chosen on val only; test eval
   (measured 0.188 → 0.069 s/iter; loss after 400 iters 717.74 vs 717.51 — compile is not bit-identical). For consistency within the hybrid arms,
   the two hybrid runs already finished without compile (m6_s0, m7_s0) are **re-run** with it; the eager runs are kept in `runs_eager_ref/`
   as a reproducibility reference only (not reported as results). No other arm is affected.
+- Note (2026-10-09): provenance wording in A6 and Engineering anonymised (internal project names removed); no change to design, hypotheses or analysis.

@@ -28,7 +28,7 @@ done as many separate memory-bound kernels, each re-reading the edge arrays.
    pre-rendered on the GPU and augment on GPU. No Rust needed.
 3. M1–M3: compile does not help; the cost is memory-bound sparse gather/scatter. The activity penalty costs 1/3 of the step.
    The remaining lever is a **fused message-passing kernel with a hand-written backward** (one pass over edges per ODE step instead of ~6).
-   This is the only place where custom GPU code (Triton, or Rust cudarc+NVRTC as in kagpt-fly brain-sim-gpu) can plausibly win ≥ 2×. Not yet built or measured.
+   This is the only place where custom GPU code (Triton, or Rust cudarc+NVRTC as in our earlier Rust/CUDA GPU engine) can plausibly win ≥ 2×. Not yet built or measured.
 
 ## Update — activity penalty kept, fused implementation (C022)
 | M1 bs4 | s/iter | VRAM |

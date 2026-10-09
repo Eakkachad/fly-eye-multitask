@@ -43,7 +43,7 @@ All tasks outlined in the brief have been completed. All Python commands were ex
 - [scripts/setup_remote.sh](file:///home/user/flyproj/course/scripts/setup_remote.sh):
   - Idempotent remote environment initialization.
   - Creates virtual environment via `uv venv` (falling back to `python3 -m venv`).
-  - Downloads MPI Sintel complete and depth-training archives via `curl -C -` with `User-Agent: kagpt-fly-research`.
+  - Downloads MPI Sintel complete and depth-training archives via `curl -C -` with `User-Agent: fly-eye-multitask-research`.
   - Extracts archives using Python's `zipfile` module (eliminating system `unzip` dependencies) and cleans up archives.
   - Resolves `flyvis.sintel_dir` dynamically and symlinks to `$DATA_DIR` (supports custom `DATA_DIR`).
   - Pre-generates null connectomes (`python nulls.py --seeds 0 1 2`) and runs `python -m pytest -q tests`.

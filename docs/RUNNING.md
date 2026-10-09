@@ -39,7 +39,7 @@ bash scripts/setup_remote.sh
 `scripts/setup_remote.sh` is completely idempotent and executes the following steps:
 1. Creates a Python 3.12 virtual environment (using `uv` if installed, otherwise `python3 -m venv`).
 2. Installs pinned dependencies from `requirements.txt`.
-3. Downloads MPI Sintel complete and depth-training zip archives (with resume support and custom `User-Agent: kagpt-fly-research`).
+3. Downloads MPI Sintel complete and depth-training zip archives (with resume support and custom `User-Agent: fly-eye-multitask-research`).
 4. Extracts archives using Python's built-in `zipfile` module (eliminating dependencies on system `unzip`) and deletes zips.
 5. Dynamically queries `python -c "import flyvis; print(flyvis.sintel_dir)"` and symlinks `flyvis.sintel_dir` to the dataset directory.
 6. Pre-generates null connectome graphs for M2 and M3 (`python nulls.py --seeds 0 1 2`).

@@ -60,7 +60,7 @@
 
 ทุกการตั้งค่ารันซ้ำ **3 seed** รวม **39 รอบ**การ train (M1–M5 รวมชุดข้อมูล 25% = 24 รอบ, M6/M7 = 6, M6f/M7f = 6, M8 = 3)
 
-M6–M8 เพิ่มหลังเห็นผล probe (ดู §7) แต่ก่อนรัน grid ไอเดียเชิงวิธีวิจัย (floor, claim ladder, residual hybrid, any-time K, diagnostics) นำมาจากบันทึกวิจัย katgpt-rs ของกลุ่มเราโดยสรุป
+M6–M8 เพิ่มหลังเห็นผล probe (ดู §7) แต่ก่อนรัน grid ไอเดียเชิงวิธีวิจัย (floor, claim ladder, residual hybrid, any-time K, diagnostics) นำมาจากบันทึกวิธีวิจัยของกลุ่มและงานตีพิมพ์ที่อ้างอิงใน PLAN A6
 
 → รายละเอียด: [MODELS.md](MODELS.md)
 

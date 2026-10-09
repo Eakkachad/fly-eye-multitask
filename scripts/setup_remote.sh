@@ -83,7 +83,7 @@ if [ -d "${DATA_DIR}/training/final" ] && [ -d "${DATA_DIR}/training/flow" ] && 
     echo "MPI Sintel complete already extracted in ${DATA_DIR}."
 else
     echo "Downloading MPI Sintel complete..."
-    curl -fSL -C - -A "kagpt-fly-research" "${COMPLETE_URL}" -o "${COMPLETE_ZIP}"
+    curl -fSL -C - -A "fly-eye-multitask-research" "${COMPLETE_URL}" -o "${COMPLETE_ZIP}"
     echo "Extracting MPI Sintel complete with python zipfile..."
     python -c "import sys, zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])" "${COMPLETE_ZIP}" "${DATA_DIR}"
     rm -f "${COMPLETE_ZIP}"
@@ -94,7 +94,7 @@ if [ -d "${DATA_DIR}/training/depth" ]; then
     echo "MPI Sintel depth training already extracted in ${DATA_DIR}."
 else
     echo "Downloading MPI Sintel depth training..."
-    curl -fSL -C - -A "kagpt-fly-research" "${DEPTH_URL}" -o "${DEPTH_ZIP}"
+    curl -fSL -C - -A "fly-eye-multitask-research" "${DEPTH_URL}" -o "${DEPTH_ZIP}"
     echo "Extracting MPI Sintel depth training with python zipfile..."
     python -c "import sys, zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])" "${DEPTH_ZIP}" "${DATA_DIR}"
     rm -f "${DEPTH_ZIP}"

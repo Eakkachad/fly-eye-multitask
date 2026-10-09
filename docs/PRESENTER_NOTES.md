@@ -140,7 +140,7 @@
 **ระวัง:** ตัวเลขเวลาเป็นประมาณการ (รันจริงอาจต่าง); ไม่ได้สร้างเวอร์ชัน Rust
 
 ### สไลด์ 15: rigor, Methodology ซื่อตรงต่อผล (#8)
-**พูดอะไร:** เรามี 4 กลไกกันตัวเอง หนึ่ง pre-registration: PLAN.md กับ amendment A1-A7 เขียนก่อนรัน สอง claim ladder: ทุกข้อสรุปติดป้าย L1 ถึง L3 สาม test once และสี่ นำไอเดียจากบันทึกวิจัย katgpt-rs มาใช้ เช่น floors ก่อน test, frozen+residual, recurrent depth
+**พูดอะไร:** เรามี 4 กลไกกันตัวเอง หนึ่ง pre-registration: PLAN.md กับ amendment A1-A7 เขียนก่อนรัน สอง claim ladder: ทุกข้อสรุปติดป้าย L1 ถึง L3 สาม test once และสี่ นำไอเดียจากบันทึกวิธีวิจัยของกลุ่มมาใช้ เช่น floors ก่อน test, frozen+residual, recurrent depth
 **ประเด็นต้องจำ:**
 - L1 = pre-registered + ยืนยันบน test · L2 = pre-registered แต่ val หรือผลไม่ครบ · L3 = exploratory
 - A1-A7 ทั้งหมดบันทึกในวันที่ 2026-10-05 ถึง 10-08 ก่อน grid
