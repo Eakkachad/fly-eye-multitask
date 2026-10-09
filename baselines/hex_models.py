@@ -386,6 +386,11 @@ def make_large() -> HexConvGRUNet:
     return HexConvGRUNet(hid_ch=96, n_layers=3, head_ch=64, in_ch=1, extent=15)
 
 
+def make_large_k(k_max: int = 4) -> HexConvGRUNetK:
+    """M9 factory: M5 architecture/size (same param count), GRU iterated K<=k_max times per frame."""
+    return HexConvGRUNetK(hid_ch=96, n_layers=3, head_ch=64, in_ch=1, extent=15, k_max=k_max)
+
+
 if __name__ == "__main__":
     small_model = make_small()
     matched_model = make_small_matched()

@@ -20,7 +20,9 @@ from torch import nn
 COURSE_DIR = Path(__file__).resolve().parent
 
 FLYVIS_MODELS = ("m1", "m2", "m3")
-GENERIC_MODELS = ("m4", "m5", "m8")
+GENERIC_MODELS = ("m4", "m5", "m8", "m9", "m9s")
+# recurrent-depth models (forward(lum, k=...)): K ~ U{1..k_max} training, any-time eval
+K_MODELS = ("m8", "m9", "m9s")
 HYBRID_MODELS = ("m6", "m7")
 FROZEN_HYBRID_MODELS = ("m6f", "m7f")
 _HYBRID_CONNECTOME = {"m6": "m1", "m7": "m2", "m6f": "m1", "m7f": "m2"}
@@ -235,7 +237,9 @@ def build_model(model: str, seed: int = 0, null_seed: Optional[int] = None,
         torch.manual_seed(seed)
         # M4 is parameter-matched to M1 *including* decoders (15,387): make_small_matched (15,402).
         return {"m4": hex_models.make_small_matched, "m5": hex_models.make_large,
-                "m8": hex_models.make_small_matched_k}[model]()
+                "m8": hex_models.make_small_matched_k,
+                "m9s": hex_models.make_small_matched_k,  # alias of m8 (identical architecture)
+                "m9": hex_models.make_large_k}[model]()  # M5 size (604,835), K-iterated
     raise ValueError(f"unknown model {model}")
 
 

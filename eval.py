@@ -64,7 +64,7 @@ def main(argv=None):
     p.add_argument("--split", default="test", choices=["test", "val"],
                    help="'val' only for debugging this script without touching test")
     p.add_argument("--k", type=int, default=None,
-                   help="m8 only: GRU inner steps at eval (default k_max); output goes to <split>_k<K>/")
+                   help="m8/m9/m9s only: GRU inner steps at eval (default k_max); output goes to <split>_k<K>/")
     p.add_argument("--frontend-only", action="store_true",
                    help="m6f/m7f only (PLAN A6.2): prediction of the frozen front-end without the "
                         "residual trunk; output goes to <split>_frontend/")

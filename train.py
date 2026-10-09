@@ -90,11 +90,26 @@ def penalty_apply(penalty, grads, lr):
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--model", required=True, choices=["m1", "m2", "m3", "m4", "m5", "m8", "m6", "m7", "m6f", "m7f"])
+    p.add_argument("--model", required=True, choices=["m1", "m2", "m3", "m4", "m5", "m8", "m9", "m9s", "m6", "m7", "m6f", "m7f"])
     p.add_argument("--frontend-ckpt", default=None,
                    help="m6f/m7f: <run_dir>/best.pt of the trained M1/M2 of the same seed")
     p.add_argument("--k-max", type=int, default=4,
-                   help="m8: K ~ U{1..k_max} GRU inner steps per training iteration")
+                   help="m8/m9/m9s: K ~ U{1..k_max} GRU inner steps per training iteration")
+    p.add_argument("--train-k-max", type=int, default=None,
+                   help="alias of --k-max (overrides it when given)")
+    p.add_argument("--flow-loss", choices=["l2norm", "epe", "robust"], default="l2norm",
+                   help="see losses.py (default: flyvis l2norm)")
+    p.add_argument("--depth-loss", choices=["l2norm", "si", "si+l2"], default="l2norm",
+                   help="see losses.py (si = scale-invariant log-depth, Eigen et al. 2014)")
+    p.add_argument("--si-lambda", type=float, default=0.5)
+    p.add_argument("--si-l2-weight", type=float, default=0.1)
+    p.add_argument("--flow-loss-weight", type=float, default=1.0,
+                   help="extra multiplier on the flow loss (default 1)")
+    p.add_argument("--depth-loss-weight", type=float, default=1.0,
+                   help="extra multiplier on the depth loss (default 1)")
+    p.add_argument("--cv-fold", type=int, default=None,
+                   help="scene-family CV: val = this fold of train+val families (needs --cv-folds)")
+    p.add_argument("--cv-folds", type=int, default=None)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--null-seed", type=int, default=None,
                    help="seed of the M2/M3 null graph (default: = --seed)")
@@ -171,6 +186,12 @@ def l2norm_losses(out, batch, targets=("flow", "depth")):
     return {t: l2norm(out[t], batch[t]) / len(targets) for t in targets}
 
 
+def task_losses(*a, **kw):
+    import losses
+
+    return losses.task_losses(*a, **kw)
+
+
 def prepare_batch(batch, depth_tf):
     batch = dict(batch)
     batch["depth"] = depth_tf(batch["depth"])
@@ -245,6 +266,16 @@ def main(argv=None):
     seed_everything(args.seed)
     splits = S.load_splits(args.splits)
     D.check_disjoint(splits)
+    if args.train_k_max is not None:
+        args.k_max = args.train_k_max
+    if (args.cv_fold is None) != (args.cv_folds is None):
+        raise SystemExit("--cv-fold and --cv-folds go together")
+    if args.cv_fold is not None:
+        if args.data_fraction != 1.0:
+            raise SystemExit("--cv-fold needs --data-fraction 1")
+        splits = S.cv_split(splits, args.cv_fold, args.cv_folds)  # never uses test scenes
+        assert not (set(splits["train"]) | set(splits["val"])) & set(splits["test"])
+        D.check_disjoint(splits)
     train_sc = S.train_scenes(splits, args.data_fraction)
     name = args.name or (f"{args.model}_s{args.seed}_f{args.data_fraction:g}"
                          f"_it{args.n_iters}")
@@ -313,7 +344,13 @@ def main(argv=None):
         connectome_file=getattr(model, "connectome_file", None),
         connectome_sha256=(sha256(model.connectome_file)
                            if getattr(model, "connectome_file", None) else None),
-        loss="flyvis.task.objectives.l2norm per task, weights 0.5/0.5",
+        loss=(f"flow={args.flow_loss} depth={args.depth_loss} per task, weights 0.5/0.5"
+              + (f" x({args.flow_loss_weight},{args.depth_loss_weight})"
+                 if (args.flow_loss_weight, args.depth_loss_weight) != (1.0, 1.0) else "")
+              + (f", si_lambda={args.si_lambda}" if "si" in args.depth_loss.split("+")
+                 else "")
+              + (f", si_l2_weight={args.si_l2_weight}" if args.depth_loss == "si+l2" else "")),
+        cv=splits.get("cv"),
         optimizer=f"Adam lr {args.lr} stepwise -> {args.lr * args.lr_stop_factor} "
                   f"in {args.lr_steps} steps",
         activity_penalty=penalty is not None,
@@ -360,12 +397,16 @@ def main(argv=None):
                 model.refresh_steady_state(args.batch_size)
             batch = prepare_batch(batch, depth_tf)
             opt.zero_grad(set_to_none=True)
-            if args.model == "m8":
+            if args.model in models.K_MODELS:
                 out = model(batch["lum"], k=int(torch.randint(1, args.k_max + 1, (1,)).item()))
             else:
                 out = model(batch["lum"], return_activity=penalty is not None) \
                     if is_flyvis else model(batch["lum"])
-            losses = l2norm_losses(out, batch)
+            losses = task_losses(
+                out, batch, flow_loss=args.flow_loss, depth_loss=args.depth_loss,
+                si_lambda=args.si_lambda, si_l2_weight=args.si_l2_weight,
+                log_scale=depth_tf.std if depth_tf.kind != "identity" else 1.0,
+                flow_weight=args.flow_loss_weight, depth_weight=args.depth_loss_weight)
             loss = sum(losses.values())
             if not torch.isfinite(loss):
                 status = "diverged"

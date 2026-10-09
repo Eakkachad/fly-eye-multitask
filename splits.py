@@ -123,6 +123,43 @@ def train_scenes(splits: dict, fraction: float) -> List[str]:
     raise KeyError(f"no pre-registered train subset for fraction {fraction}")
 
 
+def cv_split(splits: dict, fold: int, n_folds: int) -> dict:
+    """Scene-family k-fold CV over the union of the registered train+val scenes.
+
+    Test scenes are never touched (the pool is train+val only, asserted).  Families are
+    atomic: all scenes of a family go to the same fold.  Assignment is deterministic and
+    uses only names/frame counts: families are ordered by (-frames, name) and each is
+    given to the currently lightest fold (frames, then fold index) -- a greedy balance,
+    no randomness.  Returns a copy of ``splits`` with train/val replaced (test kept
+    only for the disjointness check), 25 % subsets dropped, plus a ``cv`` record.
+    """
+    if not (n_folds >= 2 and 0 <= fold < n_folds):
+        raise ValueError(f"bad fold {fold}/{n_folds}")
+    pool = sorted(set(splits["train"]) | set(splits["val"]))
+    assert not set(pool) & set(splits["test"]), "test scene in CV pool"
+    frames = splits["frames"]
+    fams: Dict[str, List[str]] = {}
+    for s in pool:
+        fams.setdefault(family(s), []).append(s)
+    if len(fams) < n_folds:
+        raise ValueError(f"{len(fams)} families < {n_folds} folds")
+    order = sorted(fams, key=lambda f: (-sum(frames[s] for s in fams[f]), f))
+    load = [0] * n_folds
+    fold_of: Dict[str, int] = {}
+    for f in order:
+        j = min(range(n_folds), key=lambda i: (load[i], i))
+        fold_of[f] = j
+        load[j] += sum(frames[s] for s in fams[f])
+    val = sorted(s for f in fams if fold_of[f] == fold for s in fams[f])
+    train = sorted(s for s in pool if s not in val)
+    out = dict(splits)
+    out.update(train=train, val=val, train_fraction_subsets={"1.0": train})
+    out["cv"] = dict(fold=fold, n_folds=n_folds,
+                     family_fold={f: fold_of[f] for f in sorted(fold_of)},
+                     frames_per_fold=load)
+    return out
+
+
 if __name__ == "__main__":
     out = make_splits(scene_frames())
     SPLITS_FILE.write_text(json.dumps(out, indent=1) + "\n")
