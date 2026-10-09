@@ -1,0 +1,353 @@
+{
+ "source": "Spring dataset, Mehl et al. CVPR 2023, DOI 10.18419/darus-3376, CC BY 4.0",
+ "sequences": {
+  "0001": {
+   "n_frames": 248,
+   "n_flow": 247,
+   "n_disp": 248,
+   "bytes_frames": 1545540216,
+   "bytes_flow": 2113417769,
+   "bytes_disp": 543417182
+  },
+  "0002": {
+   "n_frames": 131,
+   "n_flow": 130,
+   "n_disp": 131,
+   "bytes_frames": 816394227,
+   "bytes_flow": 1635255920,
+   "bytes_disp": 553059047
+  },
+  "0004": {
+   "n_frames": 98,
+   "n_flow": 97,
+   "n_disp": 98,
+   "bytes_frames": 610737666,
+   "bytes_flow": 697156167,
+   "bytes_disp": 335900763
+  },
+  "0005": {
+   "n_frames": 116,
+   "n_flow": 115,
+   "n_disp": 116,
+   "bytes_frames": 722913972,
+   "bytes_flow": 1804815807,
+   "bytes_disp": 290065671
+  },
+  "0006": {
+   "n_frames": 191,
+   "n_flow": 190,
+   "n_disp": 191,
+   "bytes_frames": 1190315247,
+   "bytes_flow": 3292513232,
+   "bytes_disp": 524709389
+  },
+  "0007": {
+   "n_frames": 148,
+   "n_flow": 147,
+   "n_disp": 148,
+   "bytes_frames": 922338516,
+   "bytes_flow": 1746696046,
+   "bytes_disp": 457186813
+  },
+  "0008": {
+   "n_frames": 177,
+   "n_flow": 176,
+   "n_disp": 177,
+   "bytes_frames": 1103067009,
+   "bytes_flow": 1411924033,
+   "bytes_disp": 298483181
+  },
+  "0009": {
+   "n_frames": 122,
+   "n_flow": 121,
+   "n_disp": 122,
+   "bytes_frames": 760306074,
+   "bytes_flow": 1290850182,
+   "bytes_disp": 335417725
+  },
+  "0010": {
+   "n_frames": 122,
+   "n_flow": 121,
+   "n_disp": 122,
+   "bytes_frames": 760306074,
+   "bytes_flow": 1186869572,
+   "bytes_disp": 303089448
+  },
+  "0011": {
+   "n_frames": 95,
+   "n_flow": 94,
+   "n_disp": 95,
+   "bytes_frames": 592041615,
+   "bytes_flow": 592059013,
+   "bytes_disp": 95295912
+  },
+  "0012": {
+   "n_frames": 266,
+   "n_flow": 265,
+   "n_disp": 266,
+   "bytes_frames": 1657716522,
+   "bytes_flow": 2121030618,
+   "bytes_disp": 669957774
+  },
+  "0013": {
+   "n_frames": 84,
+   "n_flow": 83,
+   "n_disp": 84,
+   "bytes_frames": 523489428,
+   "bytes_flow": 1297872299,
+   "bytes_disp": 216461204
+  },
+  "0014": {
+   "n_frames": 158,
+   "n_flow": 157,
+   "n_disp": 158,
+   "bytes_frames": 984658686,
+   "bytes_flow": 1218106096,
+   "bytes_disp": 316569888
+  },
+  "0015": {
+   "n_frames": 263,
+   "n_flow": 262,
+   "n_disp": 263,
+   "bytes_frames": 1639020471,
+   "bytes_flow": 2009533349,
+   "bytes_disp": 319796679
+  },
+  "0016": {
+   "n_frames": 282,
+   "n_flow": 281,
+   "n_disp": 282,
+   "bytes_frames": 1757428794,
+   "bytes_flow": 3024141221,
+   "bytes_disp": 554791771
+  },
+  "0017": {
+   "n_frames": 48,
+   "n_flow": 47,
+   "n_disp": 48,
+   "bytes_frames": 299136816,
+   "bytes_flow": 568411685,
+   "bytes_disp": 88174224
+  },
+  "0018": {
+   "n_frames": 111,
+   "n_flow": 110,
+   "n_disp": 111,
+   "bytes_frames": 691753887,
+   "bytes_flow": 1558598497,
+   "bytes_disp": 346986418
+  },
+  "0020": {
+   "n_frames": 308,
+   "n_flow": 307,
+   "n_disp": 308,
+   "bytes_frames": 1919461236,
+   "bytes_flow": 3010594841,
+   "bytes_disp": 495709498
+  },
+  "0021": {
+   "n_frames": 299,
+   "n_flow": 298,
+   "n_disp": 299,
+   "bytes_frames": 1863373083,
+   "bytes_flow": 2237698363,
+   "bytes_disp": 413901706
+  },
+  "0022": {
+   "n_frames": 19,
+   "n_flow": 18,
+   "n_disp": 19,
+   "bytes_frames": 118408323,
+   "bytes_flow": 190011341,
+   "bytes_disp": 10772565
+  },
+  "0023": {
+   "n_frames": 83,
+   "n_flow": 82,
+   "n_disp": 83,
+   "bytes_frames": 517257411,
+   "bytes_flow": 1321578278,
+   "bytes_disp": 311806736
+  },
+  "0024": {
+   "n_frames": 64,
+   "n_flow": 63,
+   "n_disp": 64,
+   "bytes_frames": 398849088,
+   "bytes_flow": 798056890,
+   "bytes_disp": 95737679
+  },
+  "0025": {
+   "n_frames": 127,
+   "n_flow": 126,
+   "n_disp": 127,
+   "bytes_frames": 791466159,
+   "bytes_flow": 849939535,
+   "bytes_disp": 421861385
+  },
+  "0026": {
+   "n_frames": 29,
+   "n_flow": 28,
+   "n_disp": 29,
+   "bytes_frames": 180728493,
+   "bytes_flow": 186340817,
+   "bytes_disp": 44658031
+  },
+  "0027": {
+   "n_frames": 13,
+   "n_flow": 12,
+   "n_disp": 13,
+   "bytes_frames": 81016221,
+   "bytes_flow": 65812087,
+   "bytes_disp": 40603992
+  },
+  "0030": {
+   "n_frames": 126,
+   "n_flow": 125,
+   "n_disp": 126,
+   "bytes_frames": 785234142,
+   "bytes_flow": 881978253,
+   "bytes_disp": 236485224
+  },
+  "0032": {
+   "n_frames": 73,
+   "n_flow": 72,
+   "n_disp": 73,
+   "bytes_frames": 454937241,
+   "bytes_flow": 409337756,
+   "bytes_disp": 130395239
+  },
+  "0033": {
+   "n_frames": 66,
+   "n_flow": 65,
+   "n_disp": 66,
+   "bytes_frames": 411313122,
+   "bytes_flow": 552368083,
+   "bytes_disp": 144375225
+  },
+  "0036": {
+   "n_frames": 108,
+   "n_flow": 107,
+   "n_disp": 108,
+   "bytes_frames": 673057836,
+   "bytes_flow": 408512342,
+   "bytes_disp": 171171282
+  },
+  "0037": {
+   "n_frames": 79,
+   "n_flow": 78,
+   "n_disp": 79,
+   "bytes_frames": 492329343,
+   "bytes_flow": 1126490273,
+   "bytes_disp": 211688790
+  },
+  "0038": {
+   "n_frames": 145,
+   "n_flow": 144,
+   "n_disp": 145,
+   "bytes_frames": 903642465,
+   "bytes_flow": 921360695,
+   "bytes_disp": 268908837
+  },
+  "0039": {
+   "n_frames": 77,
+   "n_flow": 76,
+   "n_disp": 77,
+   "bytes_frames": 479865309,
+   "bytes_flow": 827557099,
+   "bytes_disp": 156759324
+  },
+  "0041": {
+   "n_frames": 96,
+   "n_flow": 95,
+   "n_disp": 96,
+   "bytes_frames": 598273632,
+   "bytes_flow": 483785232,
+   "bytes_disp": 34834221
+  },
+  "0043": {
+   "n_frames": 91,
+   "n_flow": 90,
+   "n_disp": 91,
+   "bytes_frames": 567113547,
+   "bytes_flow": 997226752,
+   "bytes_disp": 120874479
+  },
+  "0044": {
+   "n_frames": 71,
+   "n_flow": 70,
+   "n_disp": 71,
+   "bytes_frames": 442473207,
+   "bytes_flow": 918951421,
+   "bytes_disp": 235485866
+  },
+  "0045": {
+   "n_frames": 198,
+   "n_flow": 197,
+   "n_disp": 198,
+   "bytes_frames": 1233939366,
+   "bytes_flow": 1121901056,
+   "bytes_disp": 307193763
+  },
+  "0047": {
+   "n_frames": 268,
+   "n_flow": 267,
+   "n_disp": 268,
+   "bytes_frames": 1670180556,
+   "bytes_flow": 2593588843,
+   "bytes_disp": 706450771
+  }
+ },
+ "n_eligible": 34,
+ "test_selection": {
+  "rule": "From all train sequences (names sorted ascending) with >=40 frames, draw 8 without replacement with numpy.random.default_rng(20261010).choice(sorted_names, 8, replace=False); selection made from member listings only (no frame content inspected); selected names then sorted.",
+  "seed": 20261010,
+  "eligible": [
+   "0001",
+   "0002",
+   "0004",
+   "0005",
+   "0006",
+   "0007",
+   "0008",
+   "0009",
+   "0010",
+   "0011",
+   "0012",
+   "0013",
+   "0014",
+   "0015",
+   "0016",
+   "0017",
+   "0018",
+   "0020",
+   "0021",
+   "0023",
+   "0024",
+   "0025",
+   "0030",
+   "0032",
+   "0033",
+   "0036",
+   "0037",
+   "0038",
+   "0039",
+   "0041",
+   "0043",
+   "0044",
+   "0045",
+   "0047"
+  ],
+  "selected": [
+   "0001",
+   "0005",
+   "0007",
+   "0010",
+   "0011",
+   "0018",
+   "0033",
+   "0044"
+  ],
+  "approx_bytes_to_fetch": 18978359352
+ }
+}
