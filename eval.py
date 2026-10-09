@@ -65,6 +65,10 @@ def main(argv=None):
                    help="'val' only for debugging this script without touching test")
     p.add_argument("--k", type=int, default=None,
                    help="m8 only: GRU inner steps at eval (default k_max); output goes to <split>_k<K>/")
+    p.add_argument("--frontend-only", action="store_true",
+                   help="m6f/m7f only (PLAN A6.2): prediction of the frozen front-end without the "
+                        "residual trunk; output goes to <split>_frontend/")
+    p.add_argument("--device", default="cuda", help="torch device (default cuda; 'cpu' for debugging)")
     args = p.parse_args(argv)
     logging.disable(logging.INFO)
 
@@ -77,12 +81,15 @@ def main(argv=None):
     from train import evaluate
 
     run = Path(args.run)
-    out_dir = run / (args.split if args.k is None else f"{args.split}_k{args.k}")
+    if args.frontend_only and args.k is not None:
+        sys.exit("--frontend-only and --k are mutually exclusive")
+    suffix = f"_k{args.k}" if args.k is not None else "_frontend" if args.frontend_only else ""
+    out_dir = run / f"{args.split}{suffix}"
     if (out_dir / "metrics.json").exists() and not args.force:
         sys.exit(f"{out_dir}/metrics.json exists: test already evaluated (use --force)")
     out_dir.mkdir(exist_ok=True)
 
-    ck = torch.load(run / args.ckpt, map_location="cuda", weights_only=False)
+    ck = torch.load(run / args.ckpt, map_location=args.device, weights_only=False)
     cfg = ck["config"]
     a = cfg["args"]
     splits = S.load_splits(args.splits)
@@ -91,7 +98,12 @@ def main(argv=None):
     model.load_state_dict(ck["model"])
     if args.k is not None:
         model.k_max = args.k  # m8: default forward K
-    model.to("cuda")
+    model.to(args.device)
+    if args.frontend_only:
+        if not getattr(model, "frozen", False):
+            sys.exit("--frontend-only needs a frozen-front-end hybrid (m6f/m7f)")
+        _fwd = model.forward
+        model.forward = lambda lum, *a, **kw: _fwd(lum, *a, residual=False, **kw)
     depth_tf = D.DepthTransform.from_config(cfg["depth_transform"])
     ds = D.make_datasets(splits, [], which=(args.split,))[args.split]
     assert set(ds.sequence_scenes()) == set(splits[args.split])
