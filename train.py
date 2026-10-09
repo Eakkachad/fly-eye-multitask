@@ -90,7 +90,7 @@ def penalty_apply(penalty, grads, lr):
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--model", required=True, choices=["m1", "m2", "m3", "m4", "m5", "m8", "m9", "m9s", "m6", "m7", "m6f", "m7f"])
+    p.add_argument("--model", required=True, choices=["m1", "m2", "m3", "m4", "m5", "m8", "m9", "m9s", "m9m", "m6", "m7", "m6f", "m7f"])
     p.add_argument("--frontend-ckpt", default=None,
                    help="m6f/m7f: <run_dir>/best.pt of the trained M1/M2 of the same seed")
     p.add_argument("--k-max", type=int, default=4,
@@ -131,8 +131,10 @@ def parse_args(argv=None):
                         "the penalised params (see penalty_grads/penalty_apply)")
     p.add_argument("--fastfly", action="store_true",
                    help="patch the flyvis Network with the fused Triton rollout (fastfly/)")
-    p.add_argument("--compile", choices=["none", "default", "reduce-overhead"], default="none",
+    p.add_argument("--compile", choices=["none", "default", "reduce-overhead", "cells"], default="none",
                    help="torch.compile the forward of generic models (needs CC=zigcc/cc here)")
+    p.add_argument("--fast-gather", action="store_true",
+                   help="generic hex models: scatter-free HexConv backward (m9 always on)")
     p.add_argument("--max-minutes", type=float, default=0, help="stop early (0 = off)")
     p.add_argument("--out-dir", default=str(COURSE_DIR / "runs"))
     p.add_argument("--name", default=None)
@@ -291,6 +293,8 @@ def main(argv=None):
         raise SystemExit(f"--model {args.model} needs --frontend-ckpt")
     model = models.build_model(args.model, seed=args.seed, null_seed=args.null_seed,
                                frontend_ckpt=args.frontend_ckpt)
+    if args.fast_gather:
+        models.hex_models().set_fast_gather(model)
     dev = torch.device("cuda")
     model.to(dev)
     is_flyvis = getattr(model, "is_flyvis", False)
@@ -308,6 +312,8 @@ def main(argv=None):
             model.trunk.forward = torch.compile(model.trunk.forward, mode=args.compile)
         elif is_flyvis:
             raise SystemExit("--compile is for generic models and hybrid trunks")
+        elif args.compile == "cells":
+            model.compile_cells("default")  # per-cell graphs, compile once
         else:
             model.forward = torch.compile(model.forward, mode=args.compile)
 

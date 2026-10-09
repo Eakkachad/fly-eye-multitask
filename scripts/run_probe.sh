@@ -6,7 +6,7 @@ PY=$HOME/flyproj/.venv/bin/python; export PYTHONUNBUFFERED=1
 OUT=runs_probe; mkdir -p $OUT
 run() {  # name model timeout_s maxmin
   local name=$1 model=$2 tmo=$3 maxmin=$4
-  timeout --signal=KILL $tmo flock $HOME/flyproj/.orchestra/gpu.lock \
+  flock $HOME/flyproj/.orchestra/gpu.lock timeout --signal=KILL $tmo \
     $PY train.py --model $model --seed 0 --n-iters 10000 --lr 5e-4 --val-every 1000 \
       --max-minutes $maxmin --out-dir $OUT --name $name > $OUT/$name.log 2>&1 &
   local pid=$!

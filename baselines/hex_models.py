@@ -64,6 +64,36 @@ def get_neighbour_table(extent: int = 15) -> torch.Tensor:
     return _TABLE_CACHE[extent].clone()
 
 
+_OPP = (0, 2, 1, 4, 3, 6, 5)  # index of the opposite offset in HEX_OFFSETS
+
+
+class _HexGather(torch.autograd.Function):
+    """x_pad[..., table] (gather of the 7 neighbours) with a scatter-free backward.
+
+    Forward is the plain advanced-index gather (identical values).  The default autograd
+    backward is index_put(accumulate=True), which sorts indices and dominated the GPU
+    time (78 % for the 600k-param model).  The lattice neighbour relation is symmetric
+    (offset k from i lands on j  <=>  offset opp(k) from j lands on i), so
+    grad_x[j] = sum_k g[table[j, opp(k)], k]: one gather + sum, deterministic.
+    Opt-in (HexConv.fast_gather); summation order differs from index_put, so gradients
+    are equal only up to float rounding.
+    """
+
+    @staticmethod
+    def forward(ctx, x_pad, table, back_idx):
+        ctx.save_for_backward(back_idx)
+        ctx.n = table.shape[0]
+        return x_pad[..., table]
+
+    @staticmethod
+    def backward(ctx, g):
+        (back_idx,) = ctx.saved_tensors  # (N, 7) flat index into (N+1)*7
+        n = ctx.n
+        gp = F.pad(g, (0, 0, 0, 1)).flatten(start_dim=-2)  # (..., C, (N+1)*7)
+        out = gp[..., back_idx].sum(dim=-1)  # (..., C, N)
+        return F.pad(out, (0, 1)), None, None
+
+
 class HexConv(nn.Module):
     """Convolution on the hexagonal lattice using the 7-neighbourhood.
 
@@ -87,6 +117,13 @@ class HexConv(nn.Module):
         if neighbour_table is None:
             neighbour_table = get_neighbour_table(extent)
         self.register_buffer("neighbour_table", neighbour_table.clone())
+
+        self.fast_gather = False  # opt-in scatter-free backward (see _HexGather)
+        opp = torch.tensor(_OPP)
+        n_h = neighbour_table.shape[0]
+        # back_idx[j, k] = table[j, opp(k)] * 7 + k  (flat index into the (N+1, 7) grad)
+        self.register_buffer(
+            "back_idx", neighbour_table[:, opp] * 7 + torch.arange(7), persistent=False)
 
         self.weight = nn.Parameter(torch.empty(out_ch, in_ch, 7))
         if bias:
@@ -125,7 +162,10 @@ class HexConv(nn.Module):
         # Pad last dimension with zero at index N for boundary hexals
         x_pad = F.pad(x, (0, 1), value=0.0)  # (..., in_ch, N + 1)
         # Gather 7 neighbours for each hexal -> (..., in_ch, N, 7)
-        nbrs = x_pad[..., self.neighbour_table]
+        if self.fast_gather and torch.is_grad_enabled() and x.requires_grad:
+            nbrs = _HexGather.apply(x_pad, self.neighbour_table, self.back_idx)
+        else:
+            nbrs = x_pad[..., self.neighbour_table]
 
         # Rearrange to put channel and kernel dimensions at the end:
         # (..., in_ch, N, 7) -> (..., N, in_ch, 7) -> (..., N, in_ch * 7)
@@ -275,6 +315,16 @@ class HexConvGRUNet(nn.Module):
                 hid_ch, 1, bias=True, extent=extent, neighbour_table=table
             )
 
+    def compile_cells(self, mode: str = "default") -> "HexConvGRUNet":
+        """Opt-in: torch.compile the per-step GRU cell, encoder and heads separately
+        (small graphs, compiled once; the time/K loops stay in Python).  Same weights and
+        state_dict keys; not bit-identical to eager."""
+        self.gru.forward = torch.compile(self.gru.forward, mode=mode)
+        self.encoder.forward = torch.compile(self.encoder.forward, mode=mode)
+        self.flow_head.forward = torch.compile(self.flow_head.forward, mode=mode)
+        self.depth_head.forward = torch.compile(self.depth_head.forward, mode=mode)
+        return self
+
     def forward(
         self,
         lum: Optional[torch.Tensor] = None,
@@ -361,6 +411,14 @@ class HexConvGRUNetK(HexConvGRUNet):
                 "depth": self.depth_head(h_flat).view(B, T, 1, N)}
 
 
+def set_fast_gather(model: nn.Module, on: bool = True) -> nn.Module:
+    """Enable the scatter-free HexConv backward on every HexConv of ``model``."""
+    for m in model.modules():
+        if isinstance(m, HexConv):
+            m.fast_gather = on
+    return model
+
+
 def count_parameters(model: nn.Module) -> int:
     """Return total number of trainable parameters in model."""
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -386,9 +444,13 @@ def make_large() -> HexConvGRUNet:
     return HexConvGRUNet(hid_ch=96, n_layers=3, head_ch=64, in_ch=1, extent=15)
 
 
-def make_large_k(k_max: int = 4) -> HexConvGRUNetK:
-    """M9 factory: M5 architecture/size (same param count), GRU iterated K<=k_max times per frame."""
-    return HexConvGRUNetK(hid_ch=96, n_layers=3, head_ch=64, in_ch=1, extent=15, k_max=k_max)
+def make_large_k(k_max: int = 4, hid_ch: int = 96, n_layers: int = 3, head_ch: int = 64,
+                 fast_gather: bool = True) -> HexConvGRUNetK:
+    """M9 factory: M5 architecture/size (same param count), GRU iterated K<=k_max times per frame.
+    Uses the scatter-free HexConv backward (same weights/forward values as M5-size K net)."""
+    m = HexConvGRUNetK(hid_ch=hid_ch, n_layers=n_layers, head_ch=head_ch, in_ch=1, extent=15,
+                       k_max=k_max)
+    return set_fast_gather(m, fast_gather)
 
 
 if __name__ == "__main__":

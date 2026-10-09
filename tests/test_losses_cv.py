@@ -105,3 +105,23 @@ def test_m9_params_and_k():
         assert not torch.allclose(m9(x, k=1)["flow"], m9(x, k=3)["flow"])
         m9.k_max = 2
         assert torch.equal(m9(x)["depth"], m9(x, k=2)["depth"])
+
+
+def test_fast_gather_matches_default_and_m9m_params():
+    import hex_models as h
+    import models
+    torch.manual_seed(0)
+    a, b = h.make_large_k(hid_ch=8, n_layers=2, head_ch=8, fast_gather=False), \
+        h.make_large_k(hid_ch=8, n_layers=2, head_ch=8, fast_gather=True)
+    b.load_state_dict(a.state_dict())
+    assert a.state_dict().keys() == b.state_dict().keys()
+    x = torch.rand(1, 3, 1, 721)
+    outs = []
+    for m in (a, b):
+        o = m(x, k=2)
+        (o["flow"].square().mean() + o["depth"].square().mean()).backward()
+        outs.append(o)
+    assert torch.equal(outs[0]["flow"], outs[1]["flow"])
+    for p, q in zip(a.parameters(), b.parameters()):
+        assert torch.allclose(p.grad, q.grad, rtol=1e-4, atol=1e-7)
+    assert sum(p.numel() for p in models.build_model("m9m").parameters()) == 274_323

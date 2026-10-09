@@ -13,7 +13,7 @@ grep -v '^#' "$GRID" | while IFS=$'\t' read -r name model seed frac extra th; do
   if [ -f "$HOME/flyproj/.orchestra/GRID_PAUSE" ]; then echo "PAUSED before $name $(date -Is)" | tee -a $LOG; exit 0; fi
   rm -rf $OUT/$name; mkdir -p $OUT/$name
   echo "START $name $(date -Is)" | tee -a $LOG
-  timeout --signal=KILL $((th*3600)) flock $LOCK $PY train.py --model $model --seed $seed --data-fraction $frac \
+  flock $LOCK timeout --signal=KILL $((th*3600)) $PY train.py --model $model --seed $seed --data-fraction $frac \
      --n-iters $N_ITERS --lr $LR --val-every 1000 $extra --out-dir $OUT --name $name > $OUT/$name.stdout 2>&1 < /dev/null &
   pid=$!
   while kill -0 $pid 2>/dev/null; do

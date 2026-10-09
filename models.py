@@ -20,9 +20,9 @@ from torch import nn
 COURSE_DIR = Path(__file__).resolve().parent
 
 FLYVIS_MODELS = ("m1", "m2", "m3")
-GENERIC_MODELS = ("m4", "m5", "m8", "m9", "m9s")
+GENERIC_MODELS = ("m4", "m5", "m8", "m9", "m9s", "m9m")
 # recurrent-depth models (forward(lum, k=...)): K ~ U{1..k_max} training, any-time eval
-K_MODELS = ("m8", "m9", "m9s")
+K_MODELS = ("m8", "m9", "m9s", "m9m")
 HYBRID_MODELS = ("m6", "m7")
 FROZEN_HYBRID_MODELS = ("m6f", "m7f")
 _HYBRID_CONNECTOME = {"m6": "m1", "m7": "m2", "m6f": "m1", "m7f": "m2"}
@@ -238,7 +238,10 @@ def build_model(model: str, seed: int = 0, null_seed: Optional[int] = None,
         # M4 is parameter-matched to M1 *including* decoders (15,387): make_small_matched (15,402).
         return {"m4": hex_models.make_small_matched, "m5": hex_models.make_large,
                 "m8": hex_models.make_small_matched_k,
-                "m9s": hex_models.make_small_matched_k,  # alias of m8 (identical architecture)
+                "m9s": hex_models.make_small_matched_k,  # alias of m8 (identical architecture, eager gather)
+                # m9m: mid size (274,323) = the largest width meeting the speed budget
+                # at K_max=4 (see docs); hid 64, 3 encoder layers, head 48
+                "m9m": lambda: hex_models.make_large_k(hid_ch=64, n_layers=3, head_ch=48),
                 "m9": hex_models.make_large_k}[model]()  # M5 size (604,835), K-iterated
     raise ValueError(f"unknown model {model}")
 

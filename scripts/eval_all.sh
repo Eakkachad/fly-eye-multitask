@@ -16,9 +16,9 @@ DEVARG=""; [ -n "${DEVICE:-}" ] && DEVARG="--device $DEVICE"
 LOG=$OUT/eval_all_$SPLIT.log
 fails=0; missing=0
 run() {  # run one command under the gpu lock with a hard timeout
-  if [ "$DRY_RUN" = 1 ]; then echo "DRY: timeout --signal=KILL 1800 flock $LOCK $*"; return 0; fi
+  if [ "$DRY_RUN" = 1 ]; then echo "DRY: flock $LOCK timeout --signal=KILL 1800 $*"; return 0; fi
   echo "RUN $* $(date -Is)" | tee -a $LOG
-  timeout --signal=KILL 1800 flock $LOCK "$@" >> $LOG 2>&1 < /dev/null
+  flock $LOCK timeout --signal=KILL 1800 "$@" >> $LOG 2>&1 < /dev/null
   rc=$?; [ $rc -ne 0 ] && { echo "FAIL rc=$rc: $*" | tee -a $LOG; fails=$((fails+1)); }
   return 0
 }
