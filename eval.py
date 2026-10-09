@@ -68,6 +68,9 @@ def main(argv=None):
     p.add_argument("--frontend-only", action="store_true",
                    help="m6f/m7f only (PLAN A6.2): prediction of the frozen front-end without the "
                         "residual trunk; output goes to <split>_frontend/")
+    p.add_argument("--out-name", default=None,
+                   help="output sub-directory name under the run (default <split>[_k<K>|_frontend]); "
+                        "the per-directory refuse-to-overwrite guard applies to it (A9 second look: test_last)")
     p.add_argument("--device", default="cuda", help="torch device (default cuda; 'cpu' for debugging)")
     args = p.parse_args(argv)
     logging.disable(logging.INFO)
@@ -84,7 +87,7 @@ def main(argv=None):
     if args.frontend_only and args.k is not None:
         sys.exit("--frontend-only and --k are mutually exclusive")
     suffix = f"_k{args.k}" if args.k is not None else "_frontend" if args.frontend_only else ""
-    out_dir = run / f"{args.split}{suffix}"
+    out_dir = run / (args.out_name or f"{args.split}{suffix}")
     if (out_dir / "metrics.json").exists() and not args.force:
         sys.exit(f"{out_dir}/metrics.json exists: test already evaluated (use --force)")
     out_dir.mkdir(exist_ok=True)
