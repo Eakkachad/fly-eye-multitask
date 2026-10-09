@@ -20,7 +20,7 @@ grep -v '^#' "$GRID" | while IFS=$'\t' read -r name model seed frac extra th; do
     sleep 120
     newest=$(find $OUT/$name $OUT/$name.stdout -type f -printf '%T@\n' 2>/dev/null | sort -n | tail -1)
     if [ -n "$newest" ] && [ $(( $(date +%s) - ${newest%.*} )) -gt 2700 ]; then
-      echo "WATCHDOG kill $name (stalled 45 min) $(date -Is)" | tee -a $LOG; pkill -KILL -P $pid; kill -KILL $pid 2>/dev/null
+      echo "WATCHDOG kill $name (stalled 45 min) $(date -Is)" | tee -a $LOG; pkill -KILL -f "train.py .*--name $name( |$)"; kill -KILL $pid 2>/dev/null
     fi
   done
   wait $pid; rc=$?

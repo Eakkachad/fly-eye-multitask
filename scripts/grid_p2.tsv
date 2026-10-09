@@ -1,0 +1,16 @@
+# run_name	model	seed	data_fraction	extra_args	timeout_h
+p2_oursS_s0	m8	0	1.0	--compile cells --fast-gather --k-max 4 --flow-loss epe --flow-loss-weight 0.36549707602339176 --depth-loss si+l2 --depth-loss-weight 1.2406947890818858	3
+p2_noSI_s0	m8	0	1.0	--compile cells --fast-gather --k-max 4 --flow-loss epe --flow-loss-weight 0.36549707602339176 --depth-loss l2norm --depth-loss-weight 0.016365540717465304	3
+p2_noEPE_s0	m8	0	1.0	--compile cells --fast-gather --k-max 4 --flow-loss l2norm --flow-loss-weight 0.0016329249932233612 --depth-loss si+l2 --depth-loss-weight 1.2406947890818858	3
+p2_K1_s0	m8	0	1.0	--compile cells --fast-gather --k-max 1 --flow-loss epe --flow-loss-weight 0.36549707602339176 --depth-loss si+l2 --depth-loss-weight 1.2406947890818858	3
+p2_oursS_s1	m8	1	1.0	--compile cells --fast-gather --k-max 4 --flow-loss epe --flow-loss-weight 0.36549707602339176 --depth-loss si+l2 --depth-loss-weight 1.2406947890818858	3
+p2_noSI_s1	m8	1	1.0	--compile cells --fast-gather --k-max 4 --flow-loss epe --flow-loss-weight 0.36549707602339176 --depth-loss l2norm --depth-loss-weight 0.016365540717465304	3
+p2_noEPE_s1	m8	1	1.0	--compile cells --fast-gather --k-max 4 --flow-loss l2norm --flow-loss-weight 0.0016329249932233612 --depth-loss si+l2 --depth-loss-weight 1.2406947890818858	3
+p2_K1_s1	m8	1	1.0	--compile cells --fast-gather --k-max 1 --flow-loss epe --flow-loss-weight 0.36549707602339176 --depth-loss si+l2 --depth-loss-weight 1.2406947890818858	3
+p2_oursS_s2	m8	2	1.0	--compile cells --fast-gather --k-max 4 --flow-loss epe --flow-loss-weight 0.36549707602339176 --depth-loss si+l2 --depth-loss-weight 1.2406947890818858	3
+p2_noSI_s2	m8	2	1.0	--compile cells --fast-gather --k-max 4 --flow-loss epe --flow-loss-weight 0.36549707602339176 --depth-loss l2norm --depth-loss-weight 0.016365540717465304	3
+p2_noEPE_s2	m8	2	1.0	--compile cells --fast-gather --k-max 4 --flow-loss l2norm --flow-loss-weight 0.0016329249932233612 --depth-loss si+l2 --depth-loss-weight 1.2406947890818858	3
+p2_K1_s2	m8	2	1.0	--compile cells --fast-gather --k-max 1 --flow-loss epe --flow-loss-weight 0.36549707602339176 --depth-loss si+l2 --depth-loss-weight 1.2406947890818858	3
+p2_oursL_s0	m9m	0	1.0	--compile cells --k-max 4 --flow-loss epe --flow-loss-weight 0.36549707602339176 --depth-loss si+l2 --depth-loss-weight 1.2406947890818858	3
+p2_oursL_s1	m9m	1	1.0	--compile cells --k-max 4 --flow-loss epe --flow-loss-weight 0.36549707602339176 --depth-loss si+l2 --depth-loss-weight 1.2406947890818858	3
+p2_oursL_s2	m9m	2	1.0	--compile cells --k-max 4 --flow-loss epe --flow-loss-weight 0.36549707602339176 --depth-loss si+l2 --depth-loss-weight 1.2406947890818858	3

@@ -95,3 +95,24 @@ No model is tuned on test scenes; hyper-parameters chosen on val only; test eval
   the two hybrid runs already finished without compile (m6_s0, m7_s0) are **re-run** with it; the eager runs are kept in `runs_eager_ref/`
   as a reproducibility reference only (not reported as results). No other arm is affected.
 - Note (2026-10-09): provenance wording in A6 and Engineering anonymised (internal project names removed); no change to design, hypotheses or analysis.
+- **A9 — Phase 2 (2026-10-10, owner-approved, written before any phase-2 training).** Goal: a method of our own for the graded multi-task
+  video task, compared fairly with the phase-1 arms (incl. the fly-brain models) on a FRESH test set. Sintel test is spent (A1–A8).
+  - **Our method** = recurrent-depth HexConvGRU (weight-tied GRU cell iterated K times per frame, K ~ U{1..4} in training, K = 4 at test;
+    Dehghani et al. ICLR 2019; Geiping et al. 2025) + EPE-aligned flow loss + scale-invariant depth loss with a small L2 term
+    (Eigen et al., NeurIPS 2014; λ = 0.5, l2 weight 0.1) + init-normalised task weighting (each task loss divided by its mean value at
+    initialisation, measured once on 8 fixed train batches with an untrained m8 seed 0: flow l2norm 612.398, flow epe 2.736,
+    depth l2norm 61.104, depth si+l2 0.806). Two sizes: **Ours-S** = m8 architecture (15,402 params, = M4/fly-brain budget);
+    **Ours-L** = m9m (274,323 params; the largest that fits 0.3 s/iter, 5 GB at K = 4).
+  - **Ablations (Ours-S, one change each):** noSI (depth l2norm), noEPE (flow l2norm), K1 (K_max = 1). Same init-normalised weighting rule.
+  - Training: Sintel train split (15 scenes, as phase 1), 30k iters, lr 5e-4, batch 4, 3 seeds; speed flags `--compile cells`,
+    `--fast-gather` (numerically equivalent to ~2e-7). Grid: `scripts/grid_p2.tsv` (15 runs).
+  - **Test (L1) = Spring** (CC BY 4.0, Mehl et al. CVPR 2023), 8 sequences selected by seed 20261010 before viewing content
+    (`spring_sequences.json`), evaluated ONCE for all phase-1 and phase-2 runs. **Primary checkpoint = last (30k) for every run**
+    (val selection was shown to be uninformative, ERROR_ANALYSIS Q3); best.pt reported as secondary.
+    Metrics: flow EPE over valid hexals (+ by GT-speed bins); depth: **log-depth RMSE after per-clip median alignment (primary)**
+    and raw standardised RMSE (secondary). Floors on Spring: zero-flow, LK (config frozen from Sintel val), constant depth.
+    Phase-2 arms on the old Sintel test: secondary, labelled L2 (second look).
+  - **P1:** Ours-L mean Spring flow EPE < every phase-1 arm's mean AND < the LK floor.
+  - **P2:** Ours-S < M4 on Spring flow EPE and on aligned depth RMSE, each in ≥ 2/3 paired seeds.
+  - **P3:** ablations hurt, each in ≥ 2/3 paired seeds: noSI worse aligned-depth RMSE than Ours-S; noEPE worse flow EPE; K1 worse flow EPE.
+  - **P4 (descriptive):** Ours-S vs M1 (fly brain, same budget) on both tasks.
