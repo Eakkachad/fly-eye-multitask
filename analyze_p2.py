@@ -93,7 +93,9 @@ def mean_sd(xs):
     xs = [x for x in xs if x is not None]
     if not xs:
         return float("nan"), float("nan"), 0
-    return statistics.fmean(xs), (statistics.stdev(xs) if len(xs) > 1 else float("nan")), len(xs)
+    import numpy as _np  # numpy: NaN propagates (reported as nan, never silently dropped)
+    a = _np.asarray(xs, dtype=float)
+    return float(a.mean()), (float(a.std(ddof=1)) if len(a) > 1 else float("nan")), len(a)
 
 
 def n_less(a, b):

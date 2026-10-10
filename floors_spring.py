@@ -74,9 +74,9 @@ def main(argv=None):
         for c in clips:
             pr = dict(flow=None, depth_t=None)
             if flow_fn:
-                pr["flow"] = torch.as_tensor(np.asarray(flow_fn(c)), dtype=torch.float32)
+                pr["flow"] = torch.as_tensor(np.asarray(flow_fn(c)), dtype=torch.float32, device="cpu")
             if depth_fn:
-                pr["depth_t"] = torch.as_tensor(np.asarray(depth_fn(c)), dtype=torch.float32)
+                pr["depth_t"] = torch.as_tensor(np.asarray(depth_fn(c)), dtype=torch.float32, device="cpu")
             preds.append(pr)
         m, _ = ES.compute_metrics(clips, preds, depth_tf, names, pixels=False)
         return m
