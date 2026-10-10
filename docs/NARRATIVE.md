@@ -12,7 +12,7 @@
 4. Recurrent depth: ภายในโมเดลเดียวกัน K มากขึ้นดีขึ้นเสมอ (Sintel test M8 K1 5.77 → K4 5.58) แต่ overfit เมื่อ train นาน (val ดีสุด ~6k iter).
 5. วิธีวิจัยที่ทำให้เชื่อผลได้: pre-registration (A1–A9), floors, null controls, test ใช้ครั้งเดียว ×2 ชุด, val ไม่สะท้อน test (r ภายในโมเดล 0.09) — จับข้อสรุปผิดได้อย่างน้อย 3 ครั้ง.
 6. Engineering: fused Triton kernel (flyvis 2.4×), scatter-free HexConv backward + cell-level compile (M4 3.1×, M8 2.1×) → 54 training runs บน RTX 4060 8 GB.
-Never name the owner's private projects (no "katgpt"/"kagpt"); cite published literature instead.
+Never name internal private projects; cite published literature instead.
 
 ## Colour / naming map (use everywhere, always also say it in text)
 - connectome (real wiring): M1, M6, M6f — amber #E3A33B
