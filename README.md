@@ -2,7 +2,7 @@
 ### ใช้ wiring ของสมองแมลงหวี่เป็น prior ให้ deep learning: ทำนาย optic flow และ depth จากวิดีโอพร้อมกัน
 
 > โปรเจกต์วิชา **Deep Learning for Image Analysis** · ประเภทงาน **Multi-task Learning + Video Analysis**
-> สถานะ (2026-10-08): probe ผ่านแล้ว, grid 39 รอบกำลังรันบน RTX 4060 (~31–35 ชม.), ยังไม่มีผลบน test → ดู [docs/STATUS.md](docs/STATUS.md)
+> สถานะ (2026-10-10): การทดลองครบ (54 runs), test ทั้ง Sintel และ Spring ประเมินครั้งเดียวแล้ว; เหลือ slides/ซ้อมพรีเซนต์ → ดู [docs/FINAL_REPORT.md](docs/FINAL_REPORT.md) และ [docs/STATUS.md](docs/STATUS.md)
 
 ## สรุปใน 30 วินาที
 ให้โมเดลดูวิดีโอสั้น ๆ ผ่าน "ตาแมลงหวี่" (ตาข่ายหกเหลี่ยม 721 จุด, 19 เฟรม) แล้วทำนาย **2 งานพร้อมกัน** ในทุกจุดภาพ:
@@ -37,6 +37,10 @@
 | [docs/TEAM.md](docs/TEAM.md) | บทบาท 8 คน, กำหนดการ, คำถามที่น่าจะโดนถาม | ทุกคน |
 | [docs/METHODS_OVERVIEW.md](docs/METHODS_OVERVIEW.md) | วิธีการที่ implement และสถานะโปรเจกต์ (ภาพรวม, แนวโน้ม val, ผลที่คาดหวัง) | ทุกคน, อาจารย์ |
 | [docs/STATUS.md](docs/STATUS.md) | อะไรเสร็จแล้ว, ผลเบื้องต้น, ความเสี่ยง, ขั้นต่อไป | ทุกคน |
+| [docs/FINAL_REPORT.md](docs/FINAL_REPORT.md) | รายงานผลรวมฉบับสุดท้าย (phase 1+2, hypothesis board, รูปสรุป) | ทุกคน, อาจารย์ |
+| [docs/RESULTS_P2.md](docs/RESULTS_P2.md) | ผล phase 2 บน Spring (P1–P4) | ทุกคน |
+| [docs/ERROR_ANALYSIS_SPRING.md](docs/ERROR_ANALYSIS_SPRING.md) | error analysis บน Spring (L3) | ฝ่ายประเมินผล |
+| [docs/NARRATIVE.md](docs/NARRATIVE.md) | เรื่องเล่า, key messages, สีมาตรฐานของรูป | ทุกคน |
 | [docs/PROBE_C014.md](docs/PROBE_C014.md) | ผล learnability probe (A4) | ทุกคน |
 | [docs/R2_BENCHMARK.md](docs/R2_BENCHMARK.md) | เบนช์มาร์กความเร็ว (fastfly, compile) | ฝ่าย engineering |
 | [docs/RUNNING.md](docs/RUNNING.md) | วิธีติดตั้ง, รัน, ประเมิน, reproduce (ภาษาอังกฤษ) | ฝ่าย engineering |
